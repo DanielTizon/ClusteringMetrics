@@ -30,11 +30,9 @@ object TestDataIris {
 
     Spark.conf.setAppName("Test Data Iris")
       .setMaster("local[*]")
-      .set("spark.sql.warehouse.dir", "C:/tmp/spark-warehouse")
-     // .set("spark.sql.warehouse.dir", "/tmp/spark-warehouse")
+      .set("spark.sql.warehouse.dir", "spark-warehouse")
 
-    val rutaCSV = "C:/Users/Tornar/Dropbox/Inteligencia Artificial/TFM/iris.csv"
-    //val rutaCSV = "/home/tornar/Dropbox/Inteligencia Artificial/TFM/iris.csv"
+    val rutaCSV = "iris.csv"
 
     import Spark.spark.implicits._
 
