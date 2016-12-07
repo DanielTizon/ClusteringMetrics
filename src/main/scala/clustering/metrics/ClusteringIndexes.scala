@@ -1,30 +1,20 @@
 package clustering.metrics
 
-import org.apache.spark.ml.clustering.GaussianMixtureModel
-import org.apache.spark.SparkConf
-import org.apache.spark.SparkContext
-import org.apache.spark.mllib.clustering.KMeansModel
-import scala.util.Try
-import org.apache.spark.mllib.linalg.Vectors
-import org.apache.spark.sql.functions._
-import org.apache.spark.mllib.regression.LabeledPoint
-import org.apache.spark.rdd.RDD
-import org.apache.spark.mllib.util.MLUtils
-import org.apache.spark.ml.clustering.KMeans
-import org.apache.spark.ml.linalg.Vector
-import org.apache.spark.ml.clustering.GaussianMixture
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.mllib.linalg.distributed.{ CoordinateMatrix, MatrixEntry }
-import breeze.linalg.DenseVector
 import scala.collection.mutable.ListBuffer
-import org.apache.spark.storage.StorageLevel
-import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.Row
-import clustering.test.TestIndexes
-import clustering.metrics.indexes._
+
 import org.apache.spark.ml.clustering.BisectingKMeans
 import org.apache.spark.ml.clustering.GaussianMixture
-import clustering.metrics.Results._
+import org.apache.spark.ml.clustering.KMeans
+import org.apache.spark.sql.Dataset
+
+import clustering.metrics.Results.ResultIndex
+import clustering.metrics.Results.TuplaModelos
+import clustering.metrics.indexes.IndexBall
+import clustering.metrics.indexes.IndexCH
+import clustering.metrics.indexes.IndexDB
+import clustering.metrics.indexes.IndexHartigan
+import clustering.metrics.indexes.IndexKL
+import clustering.metrics.indexes.IndexRatkowsky
 
 object ClusteringIndexes {
 

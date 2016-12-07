@@ -1,10 +1,9 @@
 package clustering.metrics
 
-import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.ml.linalg.Vector
-import org.apache.spark.ml.clustering.KMeansModel
 import org.apache.spark.ml.clustering.BisectingKMeansModel
 import org.apache.spark.ml.clustering.GaussianMixtureModel
+import org.apache.spark.ml.clustering.KMeansModel
+import org.apache.spark.ml.linalg.Vector
 
 object Results {
   case class VectorData(id: String, features: Vector)
