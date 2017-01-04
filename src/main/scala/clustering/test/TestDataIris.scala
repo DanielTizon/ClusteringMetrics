@@ -14,17 +14,15 @@ import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.ml.clustering.GaussianMixture
-import clustering.metrics.Results._
 import clustering.metrics.Spark
 import org.apache.spark.ml.feature.Normalizer
 import org.apache.spark.mllib.stat.MultivariateStatisticalSummary
 import org.apache.spark.mllib.stat.Statistics
 import org.apache.spark.ml.feature.StandardScaler
 import clustering.metrics.Utils
+import org.apache.spark.ml.feature.VectorAssembler
 
 object TestDataIris {
-
-  case class Iris(index: String, SepalLength: Double, SepalWidth: Double, PetalLength: Double, PetalWidth: Double, Specie: String)
 
   def main(args: Array[String]) {
 
@@ -41,13 +39,15 @@ object TestDataIris {
       .withColumn("SepalWidth", col("SepalWidth").cast("Double"))
       .withColumn("PetalLength", col("PetalLength").cast("Double"))
       .withColumn("PetalWidth", col("PetalWidth").cast("Double"))
-      .as[Iris]
+      .withColumnRenamed("index", "id")
 
-    val vectorData = ds.map { x => VectorData(x.index, Vectors.dense(x.SepalLength, x.SepalWidth, x.PetalLength, x.PetalWidth)) }
+
+      
+    val vectorData = new VectorAssembler().setInputCols(Array("SepalLength", "SepalWidth", "PetalLength", "PetalWidth")).setOutputCol("features").transform(ds).select("id", "features")
 
     val numRepeticiones = 1
     val maxIterations = 20
-    val method = ClusteringIndexes.METHOD_ALL
+    val method = ClusteringIndexes.METHOD_KMEANS
     val index = ClusteringIndexes.INDEX_ALL
 
     val tIni = new Date().getTime

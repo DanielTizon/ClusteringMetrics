@@ -8,13 +8,12 @@ import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.sql.SparkSession
 import clustering.metrics.Spark
-import clustering.metrics.Results._
 import org.apache.spark.mllib.stat.MultivariateStatisticalSummary
 import org.apache.spark.mllib.stat.Statistics
 import org.apache.spark.ml.feature.StandardScaler
 import org.apache.spark.sql.Dataset
-import clustering.metrics.Results
 import clustering.metrics.Utils._
+import org.apache.spark.ml.feature.VectorAssembler
 
 object TestIndexes {
 
@@ -27,21 +26,21 @@ object TestIndexes {
 
     import Spark.spark.implicits._
 
-    val dsExp1 = Spark.spark.read.parquet("/user/dtizon/TGAS-Exp1").as[Experimento1]
-    val dsExp2 = Spark.spark.read.parquet("/user/dtizon/TGAS-Exp2").as[Experimento2]
+    val dsExp1 = Spark.spark.read.parquet("/user/dtizon/TGAS-Exp1")
+    val dsExp2 = Spark.spark.read.parquet("/user/dtizon/TGAS-Exp2")
 
-    val vectorData1 = dsExp1.map(x => VectorData(x.tycho2_id, Vectors.dense(x.ra, x.dec, x.pmra, x.pmdec, x.parallax)))
-    val vectorData2 = dsExp2.map(x => VectorData(x.tycho2_id, Vectors.dense(x.x, x.y, x.z, x.vta, x.vtd)))
+    val vectorData1 = new VectorAssembler().setInputCols(Array("ra", "dec", "pmra", "pmdec", "parallax")).setOutputCol("features").transform(dsExp1).select("tycho2_id", "features")
+    val vectorData2 = new VectorAssembler().setInputCols(Array("X", "Y", "Z", "VTA", "VTD")).setOutputCol("features").transform(dsExp2).select("tycho2_id", "features")
 
     // Estandarizar datos
     val scaledVectorData1 = standarize(vectorData1)
     val scaledVectorData2 = standarize(vectorData2)
 
-    val numRepeticiones = 3
+    val numRepeticiones = 1
     val maxIterations = 20
 
     val index = ClusteringIndexes.INDEX_ALL
-    val method = ClusteringIndexes.METHOD_GMM
+    val method = ClusteringIndexes.METHOD_KMEANS
 
     val tIni1 = new Date().getTime
     val result1 = ClusteringIndexes.estimateNumberClusters(scaledVectorData1, List(10, 20, 30, 40, 50, 60, 70, 80, 90, 100), index = index, method = method, repeticiones = numRepeticiones)

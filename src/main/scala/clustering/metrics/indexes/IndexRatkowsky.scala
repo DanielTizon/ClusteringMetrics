@@ -1,14 +1,12 @@
 package clustering.metrics.indexes
 
 import org.apache.spark.sql.Dataset
-import clustering.metrics.Results.ResultGMM
-import clustering.metrics.Results.ResultKMeans
+import org.apache.spark.sql.DataFrame
 import scala.collection.mutable.ListBuffer
 import clustering.metrics.ClusteringIndexes
 import org.apache.spark.rdd.RDD.doubleRDDToDoubleRDDFunctions
-import clustering.metrics.Results.VectorData
-import clustering.metrics.Results.ResultIndex
-import clustering.metrics.Results.TuplaModelos
+import clustering.metrics.ClusteringIndexes.TuplaModelos
+import clustering.metrics.ClusteringIndexes.ResultIndex
 import clustering.metrics.Spark
 
 object IndexRatkowsky {
@@ -29,12 +27,12 @@ object IndexRatkowsky {
    *    																																			 *
    * ***************************************************************************
    */
-  def calculate(modelTuples: List[TuplaModelos], vectorData: Dataset[VectorData]) = {
+  def calculate(modelTuples: List[TuplaModelos], vectorData: DataFrame) = {
     println(s"RATKOWSKY INDEX -> ${modelTuples.map(_.k)}")
 
     import Spark.spark.implicits._
 
-    val numVariables = vectorData.head().features.size
+    val numVariables =  vectorData.head().getAs[org.apache.spark.ml.linalg.Vector]("features").size
 
     val ratkowskyIndexesKMeans: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
     val ratkowskyIndexesBisectingKMeans: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
@@ -48,14 +46,14 @@ object IndexRatkowsky {
 
       // KMEANS
       if (modelKMeans != null) {
-        val clusteredData = modelKMeans.transform(vectorData).as[ResultKMeans]
+        val clusteredData = modelKMeans.transform(vectorData)
         val allNk = for (cluster <- 0 to k - 1) yield {
-          clusteredData.filter(_.prediction == cluster).count()
+          clusteredData.where("prediction = "+cluster).count()
         }
 
         var result = 0.0
         for (variable <- 0 to numVariables - 1) {
-          val varData = vectorData.rdd.map(x => x.features(variable))
+          val varData = vectorData.rdd.map(x => x.getAs[org.apache.spark.ml.linalg.Vector]("features")(variable))
           val mediaVariable = varData.mean()
           var BGSSvar = 0.0
           for (cluster <- 0 to k - 1) {
@@ -76,14 +74,14 @@ object IndexRatkowsky {
 
       // BISECTING KMEANS
       if (modelBisectingKMeans != null) {
-        val clusteredData = modelBisectingKMeans.transform(vectorData).as[ResultKMeans]
+        val clusteredData = modelBisectingKMeans.transform(vectorData)
         val allNk = for (cluster <- 0 to k - 1) yield {
-          clusteredData.filter(_.prediction == cluster).count()
+          clusteredData.where("prediction = "+cluster).count()
         }
 
         var result = 0.0
         for (variable <- 0 to numVariables - 1) {
-          val varData = vectorData.rdd.map(x => x.features(variable))
+          val varData = vectorData.rdd.map(x => x.getAs[org.apache.spark.ml.linalg.Vector]("features")(variable))
           val mediaVariable = varData.mean()
           var BGSSvar = 0.0
           for (cluster <- 0 to k - 1) {
@@ -104,19 +102,19 @@ object IndexRatkowsky {
 
       // MEZCLAS GAUSSIANAS
       if (modelGMM != null) {
-        val clusteredData = modelGMM.transform(vectorData).as[ResultGMM]
+        val clusteredData = modelGMM.transform(vectorData)
 
         var numClustersFinales = 0
 
         val allNk = for (cluster <- 0 to k - 1) yield {
-          val numElementscluster = clusteredData.filter(_.prediction == cluster).count()
+          val numElementscluster = clusteredData.where("prediction ="+ cluster).count()
           if (numElementscluster > 0) { numClustersFinales = numClustersFinales + 1 }
           numElementscluster
         }
 
         var result = 0.0
         for (variable <- 0 to numVariables - 1) {
-          val varData = vectorData.rdd.map(x => x.features(variable))
+          val varData = vectorData.rdd.map(x => x.getAs[org.apache.spark.ml.linalg.Vector]("features")(variable))
           val mediaVariable = varData.mean()
           var BGSSvar = 0.0
           for (cluster <- 0 to k - 1) {

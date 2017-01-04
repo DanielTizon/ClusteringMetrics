@@ -3,13 +3,11 @@ package clustering.metrics.indexes
 import scala.collection.mutable.ListBuffer
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.sql.Dataset
-import clustering.metrics.Results.ResultGMM
-import clustering.metrics.Results.ResultKMeans
-import clustering.metrics.Results.VectorData
+import org.apache.spark.sql.DataFrame
 import clustering.metrics.ClusteringIndexes
 import org.apache.spark.rdd.RDD.doubleRDDToDoubleRDDFunctions
-import clustering.metrics.Results.ResultIndex
-import clustering.metrics.Results.TuplaModelos
+import clustering.metrics.ClusteringIndexes.TuplaModelos
+import clustering.metrics.ClusteringIndexes.ResultIndex
 import clustering.metrics.Spark
 
 object IndexDB {
@@ -24,7 +22,7 @@ object IndexDB {
    *  								                                  								*
    * ********************************************************************
    */
-  def calculate(modelTuples: List[TuplaModelos], vectorData: Dataset[VectorData]) = {
+  def calculate(modelTuples: List[TuplaModelos], vectorData: DataFrame) = {
     println(s"DB INDEX -> ${modelTuples.map(_.k)}")
 
     import Spark.spark.implicits._
@@ -41,13 +39,13 @@ object IndexDB {
 
       // KMEANS
       if (modelKMeans != null) {
-        val clusteredData = modelKMeans.transform(vectorData).as[ResultKMeans]
+        val clusteredData = modelKMeans.transform(vectorData)
 
         val distIntraClusters = for (cluster <- 0 to k - 1) yield {
           val centroide = modelKMeans.clusterCenters(cluster)
-          val datosCluster = clusteredData.filter(_.prediction == cluster)
+          val datosCluster = clusteredData.where("prediction ="+ cluster)
           val numDatosCluster = datosCluster.count()
-          val distPuntosCentroide = datosCluster.map(x => Vectors.sqdist(centroide, x.features)).rdd.sum
+          val distPuntosCentroide = datosCluster.map(x => Vectors.sqdist(centroide, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum
           math.sqrt(distPuntosCentroide / numDatosCluster)
         }
 
@@ -73,13 +71,13 @@ object IndexDB {
 
       // BISECTING KMEANS
       if (modelBisectingKMeans != null) {
-        val clusteredData = modelBisectingKMeans.transform(vectorData).as[ResultKMeans]
+        val clusteredData = modelBisectingKMeans.transform(vectorData)
 
         val distIntraClusters = for (cluster <- 0 to k - 1) yield {
           val centroide = modelBisectingKMeans.clusterCenters(cluster)
-          val datosCluster = clusteredData.filter(_.prediction == cluster)
+          val datosCluster = clusteredData.where("prediction = "+cluster)
           val numDatosCluster = datosCluster.count()
-          val distPuntosCentroide = datosCluster.map(x => Vectors.sqdist(centroide, x.features)).rdd.sum
+          val distPuntosCentroide = datosCluster.map(x => Vectors.sqdist(centroide, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum
           math.sqrt(distPuntosCentroide / numDatosCluster)
         }
 
@@ -105,16 +103,16 @@ object IndexDB {
 
       // MEZCLAS GAUSSIANAS
       if (modelGMM != null) {
-        val clusteredData = modelGMM.transform(vectorData).as[ResultGMM]
+        val clusteredData = modelGMM.transform(vectorData)
 
         var numClustersFinales = 0
         val distIntraClusters = for (cluster <- 0 to k - 1) yield {
           val centroide = modelGMM.gaussians(cluster).mean
-          val datosCluster = clusteredData.filter(_.prediction == cluster)
+          val datosCluster = clusteredData.where("prediction ="+ cluster)
           val numDatosCluster = datosCluster.count()
           if (numDatosCluster > 0) {
             numClustersFinales = numClustersFinales + 1
-            val distPuntosCentroide = datosCluster.map(x => Vectors.sqdist(centroide, x.features)).rdd.sum
+            val distPuntosCentroide = datosCluster.map(x => Vectors.sqdist(centroide, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum
             math.sqrt(distPuntosCentroide / numDatosCluster)
           } else 0.0
         }

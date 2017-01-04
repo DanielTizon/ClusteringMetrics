@@ -2,16 +2,13 @@ package clustering.metrics.indexes
 
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.sql.Dataset
-import clustering.metrics.Results.ResultGMM
-import clustering.metrics.Results.VectorData
+import org.apache.spark.sql.DataFrame
 import scala.collection.mutable.ListBuffer
 import clustering.metrics.ClusteringIndexes
 import org.apache.spark.rdd.RDD.doubleRDDToDoubleRDDFunctions
 import clustering.metrics.ClusteringIndexes
-import clustering.metrics.Results.ResultIndex
-import clustering.metrics.Results.ResultGMM
-import clustering.metrics.Results.VectorData
-import clustering.metrics.Results.TuplaModelos
+import clustering.metrics.ClusteringIndexes.ResultIndex
+import clustering.metrics.ClusteringIndexes.TuplaModelos
 import clustering.metrics.Spark
 
 object IndexHartigan {
@@ -26,7 +23,7 @@ object IndexHartigan {
    *  								                                  											*
    * **************************************************************************
    */
-  def calculate(modelTuples: List[TuplaModelos], vectorData: Dataset[VectorData]) = {
+  def calculate(modelTuples: List[TuplaModelos], vectorData: DataFrame) = {
     println(s"HARTIGAN INDEX -> ${modelTuples.map(_.k)}")
 
     import Spark.spark.implicits._
@@ -58,16 +55,16 @@ object IndexHartigan {
 
       // MEZCLAS GAUSSIANAS
       if (modelGMM != null) {
-        val clusteredData = modelGMM.transform(vectorData).as[ResultGMM]
+        val clusteredData = modelGMM.transform(vectorData)
         var numClustersFinales = 0
         var Wq = 0.0
         for (cluster <- 0 to k - 1) {
-          val clusterData = clusteredData.filter(_.prediction == cluster)
+          val clusterData = clusteredData.where("prediction = "+cluster)
           val numObjetosCluster = clusterData.count()
           if (numObjetosCluster > 0) {
             numClustersFinales = numClustersFinales + 1
             val centroide = modelGMM.gaussians(cluster).mean
-            Wq = Wq + clusterData.map(x => Vectors.sqdist(centroide, x.features)).rdd.sum
+            Wq = Wq + clusterData.map(x => Vectors.sqdist(centroide, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum
           }
         }
         WqByKGMM += Tuple2(numClustersFinales, Wq)

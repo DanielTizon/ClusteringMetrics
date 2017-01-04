@@ -6,17 +6,22 @@ import org.apache.spark.ml.clustering.BisectingKMeans
 import org.apache.spark.ml.clustering.GaussianMixture
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.sql.Dataset
+import org.apache.spark.sql.DataFrame
 
-import clustering.metrics.Results.ResultIndex
-import clustering.metrics.Results.TuplaModelos
 import clustering.metrics.indexes.IndexBall
 import clustering.metrics.indexes.IndexCH
 import clustering.metrics.indexes.IndexDB
 import clustering.metrics.indexes.IndexHartigan
 import clustering.metrics.indexes.IndexKL
 import clustering.metrics.indexes.IndexRatkowsky
+import org.apache.spark.ml.clustering.KMeansModel
+import org.apache.spark.ml.clustering.BisectingKMeansModel
+import org.apache.spark.ml.clustering.GaussianMixtureModel
 
 object ClusteringIndexes {
+  
+  case class TuplaModelos(k: Int, modelKMeans: KMeansModel, modelBisectingKMeans: BisectingKMeansModel, modelGMM: GaussianMixtureModel)
+  case class ResultIndex(val method: String, val indexType: String, val winnerK: Int, val indexValue: Double)
 
   val INDEX_BALL = "indexBall"
   val INDEX_CH = "indexCH"
@@ -31,7 +36,7 @@ object ClusteringIndexes {
   val METHOD_GMM = "gmm"
   val METHOD_ALL = "all"
 
-  def estimateNumberClusters(vectorData: Dataset[Results.VectorData], seqK: List[Int] = (2 to 15).toList, index: String = INDEX_ALL, method: String = METHOD_KMEANS,
+  def estimateNumberClusters(vectorData: DataFrame, seqK: List[Int] = (2 to 15).toList, index: String = INDEX_ALL, method: String = METHOD_KMEANS,
                              repeticiones: Int = 1, maxIterations: Int = 20): List[ResultIndex] = {
 
     vectorData.cache()

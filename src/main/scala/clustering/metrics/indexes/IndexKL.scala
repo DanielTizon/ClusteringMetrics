@@ -2,14 +2,14 @@ package clustering.metrics.indexes
 
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.sql.Dataset
-import clustering.metrics.Results.ResultGMM
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.mllib.stat.Statistics
 import scala.collection.mutable.ListBuffer
 import clustering.metrics.ClusteringIndexes
+import clustering.metrics.ClusteringIndexes.ResultIndex
 import org.apache.spark.rdd.RDD.doubleRDDToDoubleRDDFunctions
-import clustering.metrics.Results.VectorData
-import clustering.metrics.Results.ResultIndex
-import clustering.metrics.Results.TuplaModelos
+
+import clustering.metrics.ClusteringIndexes.TuplaModelos
 import clustering.metrics.Spark
 
 object IndexKL {
@@ -28,12 +28,12 @@ object IndexKL {
    *  								                                 												 *
    * ***************************************************************************
    */
-  def calculate(modelTuples: List[TuplaModelos], vectorData: Dataset[VectorData]) = {
+  def calculate(modelTuples: List[TuplaModelos], vectorData: DataFrame) = {
     println(s"KL INDEX -> ${modelTuples.map(_.k)}")
 
     import Spark.spark.implicits._
 
-    val p = vectorData.head().features.size.toDouble
+    val p = vectorData.head().getAs[org.apache.spark.ml.linalg.Vector]("features").size.toDouble
 
     val WqByKKmeans: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
     val WqByKBisectingKmeans: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
@@ -61,16 +61,16 @@ object IndexKL {
 
       // MEZCLAS GAUSSIANAS
       if (modelGMM != null) {
-        val clusteredData = modelGMM.transform(vectorData).as[ResultGMM]
+        val clusteredData = modelGMM.transform(vectorData)
         var numClustersFinales = 0
         var Wq = 0.0
         for (cluster <- 0 to k - 1) {
-          val clusterData = clusteredData.filter(_.prediction == cluster)
+          val clusterData = clusteredData.where("prediction =" + cluster)
           val numObjetosCluster = clusterData.count()
           if (numObjetosCluster > 0) {
             numClustersFinales = numClustersFinales + 1
             val centroide = modelGMM.gaussians(cluster).mean
-            Wq = Wq + clusterData.map(x => Vectors.sqdist(centroide, x.features)).rdd.sum
+            Wq = Wq + clusterData.map(x => Vectors.sqdist(centroide, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum
           }
         }
         WqByKGMM += Tuple2(numClustersFinales, Wq)
@@ -81,9 +81,9 @@ object IndexKL {
 
     if (!WqByKKmeans.isEmpty) {
       if (modelTuples.map(_.k).sorted.head == 1) {
-        val features = vectorData.rdd.map(x => org.apache.spark.mllib.linalg.Vectors.dense(x.features.toArray))
+        val features = vectorData.rdd.map(x => org.apache.spark.mllib.linalg.Vectors.dense(x.getAs[org.apache.spark.ml.linalg.Vector]("features").toArray))
         val centroideDataSet = Statistics.colStats(features).mean
-        val Wq = vectorData.map(x => Vectors.sqdist(centroideDataSet.asML, x.features)).rdd.sum()
+        val Wq = vectorData.map(x => Vectors.sqdist(centroideDataSet.asML, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum()
         WqByKKmeans += Tuple2(1, Wq)
       }
 
@@ -112,9 +112,9 @@ object IndexKL {
 
     if (!WqByKBisectingKmeans.isEmpty) {
       if (modelTuples.map(_.k).sorted.head == 1) {
-        val features = vectorData.rdd.map(x => org.apache.spark.mllib.linalg.Vectors.dense(x.features.toArray))
+        val features = vectorData.rdd.map(x => org.apache.spark.mllib.linalg.Vectors.dense(x.getAs[org.apache.spark.ml.linalg.Vector]("features").toArray))
         val centroideDataSet = Statistics.colStats(features).mean
-        val Wq = vectorData.map(x => Vectors.sqdist(centroideDataSet.asML, x.features)).rdd.sum()
+        val Wq = vectorData.map(x => Vectors.sqdist(centroideDataSet.asML, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum()
         WqByKBisectingKmeans += Tuple2(1, Wq)
       }
 
@@ -143,9 +143,9 @@ object IndexKL {
 
     if (!WqByKGMM.isEmpty) {
       if (modelTuples.map(_.k).sorted.head == 1) {
-        val features = vectorData.rdd.map(x => org.apache.spark.mllib.linalg.Vectors.dense(x.features.toArray))
+        val features = vectorData.rdd.map(x => org.apache.spark.mllib.linalg.Vectors.dense(x.getAs[org.apache.spark.ml.linalg.Vector]("features").toArray))
         val centroideDataSet = Statistics.colStats(features).mean
-        val Wq = vectorData.map(x => Vectors.sqdist(centroideDataSet.asML, x.features)).rdd.sum()
+        val Wq = vectorData.map(x => Vectors.sqdist(centroideDataSet.asML, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum()
         WqByKGMM += Tuple2(1, Wq)
       }
 
