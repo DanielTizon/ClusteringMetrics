@@ -3,9 +3,11 @@ package clustering.metrics
 import scala.collection.mutable.ListBuffer
 
 import org.apache.spark.ml.clustering.BisectingKMeans
+import org.apache.spark.ml.clustering.BisectingKMeansModel
 import org.apache.spark.ml.clustering.GaussianMixture
+import org.apache.spark.ml.clustering.GaussianMixtureModel
 import org.apache.spark.ml.clustering.KMeans
-import org.apache.spark.sql.Dataset
+import org.apache.spark.ml.clustering.KMeansModel
 import org.apache.spark.sql.DataFrame
 
 import clustering.metrics.indexes.IndexBall
@@ -14,9 +16,6 @@ import clustering.metrics.indexes.IndexDB
 import clustering.metrics.indexes.IndexHartigan
 import clustering.metrics.indexes.IndexKL
 import clustering.metrics.indexes.IndexRatkowsky
-import org.apache.spark.ml.clustering.KMeansModel
-import org.apache.spark.ml.clustering.BisectingKMeansModel
-import org.apache.spark.ml.clustering.GaussianMixtureModel
 
 object ClusteringIndexes {
   

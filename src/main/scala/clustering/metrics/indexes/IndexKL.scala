@@ -1,16 +1,16 @@
 package clustering.metrics.indexes
 
-import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.mllib.stat.Statistics
 import scala.collection.mutable.ListBuffer
+
+import org.apache.spark.ml.linalg.Vectors
+import org.apache.spark.mllib.stat.Statistics
+import org.apache.spark.rdd.RDD.doubleRDDToDoubleRDDFunctions
+import org.apache.spark.sql.DataFrame
+
+import clustering.metrics.Spark
 import clustering.metrics.ClusteringIndexes
 import clustering.metrics.ClusteringIndexes.ResultIndex
-import org.apache.spark.rdd.RDD.doubleRDDToDoubleRDDFunctions
-
 import clustering.metrics.ClusteringIndexes.TuplaModelos
-import clustering.metrics.Spark
 
 object IndexKL {
 

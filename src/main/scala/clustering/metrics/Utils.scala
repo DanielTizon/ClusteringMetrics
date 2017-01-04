@@ -1,18 +1,16 @@
 package clustering.metrics
 
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.SQLContext
 import scala.reflect.runtime.universe
-import org.apache.spark.sql.Dataset
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.mllib.stat.MultivariateStatisticalSummary
+
 import org.apache.spark.ml.feature.StandardScaler
-import org.apache.spark.mllib.stat.Statistics
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.udf
 
 object Utils {
 
   def standarize(vectorData: DataFrame): DataFrame = {
-    import Spark.spark.implicits._
     val scaler = new StandardScaler().setInputCol("features").setOutputCol("scaledFeatures").setWithStd(true).setWithMean(true)
     val scalerModel = scaler.fit(vectorData)
     scalerModel.transform(vectorData).drop("features").withColumnRenamed("scaledFeatures", "features")

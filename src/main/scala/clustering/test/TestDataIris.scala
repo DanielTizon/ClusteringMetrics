@@ -1,26 +1,12 @@
 package clustering.test
 
-import org.apache.spark.SparkContext
-import org.apache.spark.SparkConf
-import org.apache.spark.sql.SparkSession
-import clustering.metrics.ClusteringIndexes
-import org.apache.spark.sql.types.StructType
 import java.util.Date
-import org.apache.spark.sql.types.StructField
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.StringType
-import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.ml.linalg.Vector
-import org.apache.spark.ml.clustering.KMeans
-import org.apache.spark.ml.clustering.GaussianMixture
-import clustering.metrics.Spark
-import org.apache.spark.ml.feature.Normalizer
-import org.apache.spark.mllib.stat.MultivariateStatisticalSummary
-import org.apache.spark.mllib.stat.Statistics
-import org.apache.spark.ml.feature.StandardScaler
-import clustering.metrics.Utils
+
 import org.apache.spark.ml.feature.VectorAssembler
+import org.apache.spark.sql.functions.col
+
+import clustering.metrics.ClusteringIndexes
+import clustering.metrics.Spark
 
 object TestDataIris {
 
@@ -32,7 +18,7 @@ object TestDataIris {
 
     val rutaCSV = "iris.csv"
 
-    import Spark.spark.implicits._
+
 
     val ds = Spark.spark.read.option("delimiter", ",").option("header", "true").csv(rutaCSV)
       .withColumn("SepalLength", col("SepalLength").cast("Double"))
@@ -47,7 +33,7 @@ object TestDataIris {
 
     val numRepeticiones = 1
     val maxIterations = 20
-    val method = ClusteringIndexes.METHOD_KMEANS
+    val method = ClusteringIndexes.METHOD_GMM
     val index = ClusteringIndexes.INDEX_ALL
 
     val tIni = new Date().getTime

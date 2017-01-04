@@ -1,19 +1,12 @@
 package clustering.test
 
-import org.apache.spark.SparkConf
-import org.apache.spark.SparkContext
 import java.util.Date
-import clustering.metrics.ClusteringIndexes
-import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.ml.linalg.Vector
-import org.apache.spark.sql.SparkSession
-import clustering.metrics.Spark
-import org.apache.spark.mllib.stat.MultivariateStatisticalSummary
-import org.apache.spark.mllib.stat.Statistics
-import org.apache.spark.ml.feature.StandardScaler
-import org.apache.spark.sql.Dataset
-import clustering.metrics.Utils._
+
 import org.apache.spark.ml.feature.VectorAssembler
+
+import clustering.metrics.ClusteringIndexes
+import clustering.metrics.Spark
+import clustering.metrics.Utils.standarize
 
 object TestIndexes {
 
@@ -24,7 +17,6 @@ object TestIndexes {
       .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .set("spark.sql.warehouse.dir", "/user/dtizon/spark-warehouse")
 
-    import Spark.spark.implicits._
 
     val dsExp1 = Spark.spark.read.parquet("/user/dtizon/TGAS-Exp1")
     val dsExp2 = Spark.spark.read.parquet("/user/dtizon/TGAS-Exp2")
