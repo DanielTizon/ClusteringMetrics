@@ -19,7 +19,7 @@ object IndexHartigan {
    * 																																					*
    *    Index = ((Wq / Wq+1) - 1) * (n - q - 1)          					            *
    *    																							 												*
-   *    Te maximum difference between levels indicates the best solution			*
+   *    The maximum difference between levels indicates the best solution			*
    *  								                                  											*
    * **************************************************************************
    */

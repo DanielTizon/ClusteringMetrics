@@ -7,7 +7,7 @@ import org.apache.spark.sql.functions.col
 
 import clustering.metrics.ClusteringIndexes
 import clustering.metrics.Spark
-import clustering.metrics.ExternalValidation
+import clustering.metrics.indexes.IndexRand
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.ml.clustering.BisectingKMeans
 import org.apache.spark.ml.clustering.GaussianMixture
@@ -42,12 +42,11 @@ object TestRandIndex {
     val k = 3
 
     val resKMeans = new KMeans().setK(k).setMaxIter(maxIterations).fit(vectorData).transform(vectorData)
-    val evidenciaSetosa = Spark.spark.sparkContext.parallelize(1 to 50).cartesian(Spark.spark.sparkContext.parallelize(1 to 50)).filter(x => x._1 < x._2).map(x => (x._1.toString, x._2.toString))
-    println(evidenciaSetosa.count)
-    val evidenciaAgrupados: RDD[Tuple2[String, String]] = evidenciaSetosa
-    val evidenciaSeparados = Spark.spark.sparkContext.emptyRDD[Tuple2[String, String]]
+    val evidenciaSetosa = Spark.spark.sparkContext.parallelize(1 to 50).cartesian(Spark.spark.sparkContext.parallelize(1 to 50)).filter(x => x._1 < x._2).zipWithIndex().map(x => (x._2, x._1._1.toString, x._1._2.toString))
+    val evidenciaAgrupados: RDD[Tuple3[Long, String, String]] = evidenciaSetosa
+    val evidenciaSeparados = Spark.spark.sparkContext.emptyRDD[Tuple3[Long, String, String]]
     val tIni = new Date().getTime
-    val randIndex = ExternalValidation.RandIndex(resKMeans, evidenciaAgrupados, evidenciaSeparados)
+    val randIndex = IndexRand.calculate(resKMeans, evidenciaAgrupados, evidenciaSeparados)
     val tFin = new Date().getTime
     val tEmpleado = (tFin - tIni) / 1000.0
     println("Rand Index: " + randIndex)
