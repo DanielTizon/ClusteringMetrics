@@ -1,10 +1,10 @@
 # ClusteringMetrics
 
 I have developed some important clustering evaluation indexes in Spark 2.0.2,
-using the Scala API. These indexes help us to choose the best number of "k"
+using the Scala API. These indexes can help us to choose the best number of "k"
 for our dataset. 
 
-The indexes developed have been:
+The internal indexes developed have been:
 
 * Ball and Hall Index (Ball Index) - 1965
 * Calinski and Harabasz Index (CH Index) - 1974
@@ -14,6 +14,11 @@ The indexes developed have been:
 * Ratkowsky and Lance Index (Ratkowsky Index) - 1978
 
 These indexes have been tested using the Iris dataset, and the R package NbClust.
+
+I also have developed an external index (useful when you have some information 
+about any elements that must go in the same group or in different groups):
+
+* Rand Index (Rand Index) - 1971
 
 Any suggestion or fix will be appreciated.
 
