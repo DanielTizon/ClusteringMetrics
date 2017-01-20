@@ -15,6 +15,7 @@ import org.apache.spark.mllib.clustering.PowerIterationClustering
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.rdd.RDD
 import clustering.metrics.Utils.standarize
+import org.apache.spark.sql.functions.desc
 
 object TestRandIndex2 {
   def main(args: Array[String]) {
@@ -30,30 +31,28 @@ object TestRandIndex2 {
 
     val spark = Spark.spark
 
-    val dataset = spark.read.parquet("/home/tornar/TGAS-Exp1").withColumnRenamed("tycho2_id", "id")    
+    val dataset = spark.read.parquet("/home/tornar/TGAS-Exp1").withColumnRenamed("tycho2_id", "id")
     val vectorData = new VectorAssembler().setInputCols(Array("ra", "dec", "pmra", "pmdec", "parallax")).setOutputCol("features").transform(dataset).select("id", "features")
 
     // Estandarizar datos
     val scaledDS = standarize(vectorData).cache
 
     val maxIterations = 20
-    val k = 20
+    val k = 15
 
     val res = new KMeans().setK(k).setMaxIter(maxIterations).fit(scaledDS).transform(scaledDS)
     //val res = new BisectingKMeans().setK(k).setMaxIter(maxIterations).fit(scaledDS).transform(scaledDS)
     //val res = new GaussianMixture().setK(k).setMaxIter(maxIterations).fit(scaledDS).transform(scaledDS)
 
-    res.select("id", "prediction").join(dataset, "id").sample(false, 0.25).coalesce(1).write.option("header", true).csv("/home/tornar/TGAS_1_KMeans_20_CSV")
-    
-    val evidencia = spark.read.option("header", true).csv("/home/tornar/Dropbox/Inteligencia Artificial/TFM/ValidacionExterna.csv").rdd.map(x => (x.getAs[String]("CUMULO"), x.getAs[String]("TYCHO")))
+    //res.select("id", "prediction").join(dataset, "id").sample(false, 0.30).coalesce(1).write.option("header", true).csv("/home/tornar/TGAS_GROUPED")
 
-    val evidenciaAgrupados: RDD[Tuple3[Long, String, String]] = evidencia.groupByKey.flatMap(x => x._2.toSet.subsets(2)).map(x => (x.head, x.last)).zipWithIndex().map(x => (x._2, x._1._1, x._1._2))
-    val evidenciaSeparados: RDD[Tuple3[Long, String, String]] = evidencia.cartesian(evidencia).filter(x => x._1._1 != x._2._1).map(x => (x._1._2, x._2._2)).zipWithIndex().map(x => (x._2, x._1._1, x._1._2))
+    val evidencia = spark.read.option("header", true).csv("/home/tornar/Dropbox/Inteligencia Artificial/TFM/ValidacionExterna.csv")
 
     val tIni = new Date().getTime
-    val randIndex = IndexRand.calculate(res, evidenciaAgrupados, evidenciaSeparados)
+    val randIndex = IndexRand.calculate(res, evidencia)
     val tFin = new Date().getTime
     val tEmpleado = (tFin - tIni) / 1000.0
+
     println("Rand Index: " + randIndex)
     println("Tiempo empleado: " + tEmpleado)
   }
