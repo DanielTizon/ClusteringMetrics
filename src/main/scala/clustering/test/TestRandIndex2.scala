@@ -42,10 +42,10 @@ object TestRandIndex2 {
     val res = new KMeans().setK(k).setMaxIter(maxIterations).fit(scaledDS).transform(scaledDS)
     //val res = new BisectingKMeans().setK(k).setMaxIter(maxIterations).fit(scaledDS).transform(scaledDS)
     //val res = new GaussianMixture().setK(k).setMaxIter(maxIterations).fit(scaledDS).transform(scaledDS)
-
-    res.select("id", "prediction").join(dataset, "id").sample(false, 0.25).coalesce(1).write.option("header", true).csv("/home/tornar/TGAS_1_KMeans_20_CSV")
     
-    val evidencia = spark.read.option("header", true).csv("/home/tornar/Dropbox/Inteligencia Artificial/TFM/ValidacionExterna.csv").rdd.map(x => (x.getAs[String]("CUMULO"), x.getAs[String]("TYCHO")))
+    //res.select("id", "prediction").join(dataset, "id").sample(false, 0.40).coalesce(1).write.option("header", true).csv("/home/tornar/clustering_15_grupos")
+    
+    val evidencia = spark.read.option("header", true).csv("/home/tornar/Dropbox/Inteligencia Artificial/TFM/ValidacionExterna.csv").rdd.map(x => (x.getAs[String]("GRUPO"), x.getAs[String]("ID")))
 
     val evidenciaAgrupados: RDD[Tuple3[Long, String, String]] = evidencia.groupByKey.flatMap(x => x._2.toSet.subsets(2)).map(x => (x.head, x.last)).zipWithIndex().map(x => (x._2, x._1._1, x._1._2))
     val evidenciaSeparados: RDD[Tuple3[Long, String, String]] = evidencia.cartesian(evidencia).filter(x => x._1._1 != x._2._1).map(x => (x._1._2, x._2._2)).zipWithIndex().map(x => (x._2, x._1._1, x._1._2))
