@@ -18,11 +18,15 @@ object IndexRand {
    *  								                                 												 *
    * ***************************************************************************
    */
-  def calculate(resultClustering: DataFrame, evidenciaAgrupados: RDD[Tuple3[Long, String, String]], evidenciaSeparados: RDD[Tuple3[Long, String, String]]) = {
+  def calculate(resultClustering: DataFrame, evidencia: DataFrame) = {
 
     import Spark.spark.implicits._
 
     val result = resultClustering.select("ID", "prediction")
+
+    val evidenciaRDD = evidencia.filter("ID is not null and GRUPO is not null").rdd.map(x => (x.getAs[String]("GRUPO"), x.getAs[String]("ID")))
+    val evidenciaAgrupados: RDD[Tuple3[Long, String, String]] = evidenciaRDD.groupByKey.flatMap(x => x._2.toSet.subsets(2)).map(x => (x.head, x.last)).zipWithIndex().map(x => (x._2, x._1._1, x._1._2))
+    val evidenciaSeparados: RDD[Tuple3[Long, String, String]] = evidenciaRDD.cartesian(evidenciaRDD).filter(x => x._1._1 != x._2._1).map(x => (x._1._2, x._2._2)).zipWithIndex().map(x => (x._2, x._1._1, x._1._2))
 
     var truePositives = 0L
     var falseNegatives = 0L
