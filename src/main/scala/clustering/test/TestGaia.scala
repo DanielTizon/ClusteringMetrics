@@ -7,19 +7,21 @@ import org.apache.spark.ml.feature.VectorAssembler
 import clustering.metrics.ClusteringIndexes
 import clustering.metrics.Spark
 import clustering.metrics.Utils.standarize
+import org.apache.spark.ml.clustering.KMeans
+import clustering.metrics.indexes.IndexRand
 
 object TestIndexes {
 
   def main(args: Array[String]) {
 
-    Spark.conf.setAppName("Clustering-metrics")
-      .set("spark.ui.port", "1982")      
+    Spark.conf.setAppName("Gaia-Clustering-Metrics")
+      .setMaster("local[*]")
+      .set("spark.ui.port", "2001")
       .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-      .set("spark.sql.warehouse.dir", "/user/dtizon/spark-warehouse")
+      .set("spark.sql.warehouse.dir", "spark-warehouse")
 
-
-    val dsExp1 = Spark.spark.read.parquet("/user/dtizon/TGAS-Exp1")
-    val dsExp2 = Spark.spark.read.parquet("/user/dtizon/TGAS-Exp2")
+    val dsExp1 = Spark.spark.read.parquet("TGAS-Exp1")
+    val dsExp2 = Spark.spark.read.parquet("TGAS-Exp2")
 
     val vectorData1 = new VectorAssembler().setInputCols(Array("ra", "dec", "pmra", "pmdec", "parallax")).setOutputCol("features").transform(dsExp1).select("tycho2_id", "features")
     val vectorData2 = new VectorAssembler().setInputCols(Array("X", "Y", "Z", "VTA", "VTD")).setOutputCol("features").transform(dsExp2).select("tycho2_id", "features")
@@ -49,6 +51,12 @@ object TestIndexes {
 
     println(s"EXPERIMENTO 2 - TIEMPO EMPLEADO: $tEmpleado2 minutos")
     result2.foreach(x => println(s"EXPERIMENTO 2: $x"))
+
+    // EVALUACION EXTERNA - RAND INDEX
+    val evidencia = Spark.spark.read.option("header", true).csv("/home/tornar/Dropbox/Inteligencia Artificial/TFM/Validacion Externa Gaia.csv")
+    val res = new KMeans().setK(20).fit(scaledVectorData1).transform(scaledVectorData1)
+    val randIndex = IndexRand.calculate(res, evidencia)
+    println("Rand Index: " + randIndex)
 
     Spark.spark.stop()
   }
