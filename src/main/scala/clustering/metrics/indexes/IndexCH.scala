@@ -46,10 +46,10 @@ object IndexCH {
 
       // KMEANS
       if (modelKMeans != null) {
-        val clusteredData = modelKMeans.transform(vectorData)
+        val clusteredData = modelKMeans._2
 
         // Within Set Sum of Squared Errors
-        val Wq = modelKMeans.computeCost(vectorData)
+        val Wq = modelKMeans._1.computeCost(vectorData)
 
         // Bq = suma de between-group dispersion para cada cluster 
         var Bq = 0.0
@@ -57,7 +57,7 @@ object IndexCH {
         for (cluster <- 0 to k - 1) {
           // nk = numero de objetos en cluster 
           val nk = clusteredData.where("prediction = "+cluster).count
-          val centroide = modelKMeans.clusterCenters(cluster)
+          val centroide = modelKMeans._1.clusterCenters(cluster)
           Bq = Bq + (nk * Vectors.sqdist(centroideDataSet.asML, centroide))
         }
 
@@ -67,10 +67,10 @@ object IndexCH {
 
       // BISECTING KMEANS
       if (modelBisectingKMeans != null) {
-        val clusteredData = modelBisectingKMeans.transform(vectorData)
+        val clusteredData = modelBisectingKMeans._2
 
         // Within Set Sum of Squared Errors
-        val Wq = modelBisectingKMeans.computeCost(vectorData)
+        val Wq = modelBisectingKMeans._1.computeCost(vectorData)
 
         // Bq = suma de between-group dispersion para cada cluster 
         var Bq = 0.0
@@ -78,7 +78,7 @@ object IndexCH {
         for (cluster <- 0 to k - 1) {
           // nk = numero de objetos en cluster 
           val nk = clusteredData.where("prediction = "+ cluster).count
-          val centroide = modelBisectingKMeans.clusterCenters(cluster)
+          val centroide = modelBisectingKMeans._1.clusterCenters(cluster)
           Bq = Bq + (nk * Vectors.sqdist(centroideDataSet.asML, centroide))
         }
 
@@ -88,7 +88,7 @@ object IndexCH {
 
       // MEZCLAS GAUSSIANAS
       if (modelGMM != null) {
-        val clusteredData = modelGMM.transform(vectorData)
+        val clusteredData = modelGMM._2
 
         var numClustersFinales = 0
         var Wq = 0.0
@@ -97,7 +97,7 @@ object IndexCH {
           val numObjetosCluster = clusterData.count()
           if (numObjetosCluster > 0) {
             numClustersFinales = numClustersFinales + 1
-            val centroide = modelGMM.gaussians(cluster).mean
+            val centroide = modelGMM._1.gaussians(cluster).mean
             Wq = Wq + clusterData.map(x => Vectors.sqdist(centroide, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum
           }
         }
@@ -108,7 +108,7 @@ object IndexCH {
         for (cluster <- 0 to k - 1) {
           // nk = numero de objetos en cluster 
           val nk = clusteredData.where("prediction = "+cluster).count
-          val centroide = modelGMM.gaussians(cluster).mean
+          val centroide = modelGMM._1.gaussians(cluster).mean
           Bq = Bq + (nk * Vectors.sqdist(centroideDataSet.asML, centroide))
         }
 

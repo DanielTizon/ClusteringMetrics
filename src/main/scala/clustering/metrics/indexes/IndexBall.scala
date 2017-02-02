@@ -41,7 +41,7 @@ object IndexBall {
       // KMEANS
       if (modelKMeans != null) {
         // Wq = WSSSE (Within Set Sum of Squared Errors)
-        val Wq = modelKMeans.computeCost(vectorData)
+        val Wq = modelKMeans._1.computeCost(vectorData)
         val ballIndex = Wq / k
         ballIndexesKMeans += Tuple2(k, ballIndex)
       }
@@ -49,14 +49,14 @@ object IndexBall {
       // BISECTING KMEANS
       if (modelBisectingKMeans != null) {
         // Wq = WSSSE (Within Set Sum of Squared Errors)
-        val Wq = modelBisectingKMeans.computeCost(vectorData)
+        val Wq = modelBisectingKMeans._1.computeCost(vectorData)
         val ballIndex = Wq / k
         ballIndexesBisectingKMeans += Tuple2(k, ballIndex)
       }
 
       // MEZCLAS GAUSSIANAS
       if (modelGMM != null) {
-        val clusteredData = modelGMM.transform(vectorData)
+        val clusteredData = modelGMM._2
         var numClustersFinales = 0
         var Wq = 0.0
         for (cluster <- 0 to k - 1) {
@@ -64,7 +64,7 @@ object IndexBall {
           val numObjetosCluster = clusterData.count()
           if (numObjetosCluster > 0) {
             numClustersFinales = numClustersFinales + 1
-            val centroide = modelGMM.gaussians(cluster).mean
+            val centroide = modelGMM._1.gaussians(cluster).mean
             Wq = Wq + clusterData.map(x => Vectors.sqdist(centroide, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum
           }
         }

@@ -40,10 +40,10 @@ object IndexDB {
 
       // KMEANS
       if (modelKMeans != null) {
-        val clusteredData = modelKMeans.transform(vectorData)
+        val clusteredData = modelKMeans._2
 
         val distIntraClusters = for (cluster <- 0 to k - 1) yield {
-          val centroide = modelKMeans.clusterCenters(cluster)
+          val centroide = modelKMeans._1.clusterCenters(cluster)
           val datosCluster = clusteredData.where("prediction ="+ cluster)
           val numDatosCluster = datosCluster.count()
           val distPuntosCentroide = datosCluster.map(x => Vectors.sqdist(centroide, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum
@@ -53,11 +53,11 @@ object IndexDB {
         var sumElements = 0.0
 
         for (cluster1 <- 0 to k - 1) {
-          val centroide1 = modelKMeans.clusterCenters(cluster1)
+          val centroide1 = modelKMeans._1.clusterCenters(cluster1)
           val d1 = distIntraClusters(cluster1)
           var maxResult = 0.0
           for (cluster2 <- 0 to k - 1 if (cluster2 != cluster1)) {
-            val centroide2 = modelKMeans.clusterCenters(cluster2)
+            val centroide2 = modelKMeans._1.clusterCenters(cluster2)
             val d2 = distIntraClusters(cluster2)
             val d12 = math.sqrt(Vectors.sqdist(centroide1, centroide2))
             val result = (d1 + d2) / d12
@@ -72,10 +72,10 @@ object IndexDB {
 
       // BISECTING KMEANS
       if (modelBisectingKMeans != null) {
-        val clusteredData = modelBisectingKMeans.transform(vectorData)
+        val clusteredData = modelBisectingKMeans._2
 
         val distIntraClusters = for (cluster <- 0 to k - 1) yield {
-          val centroide = modelBisectingKMeans.clusterCenters(cluster)
+          val centroide = modelBisectingKMeans._1.clusterCenters(cluster)
           val datosCluster = clusteredData.where("prediction = "+cluster)
           val numDatosCluster = datosCluster.count()
           val distPuntosCentroide = datosCluster.map(x => Vectors.sqdist(centroide, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum
@@ -85,11 +85,11 @@ object IndexDB {
         var sumElements = 0.0
 
         for (cluster1 <- 0 to k - 1) {
-          val centroide1 = modelBisectingKMeans.clusterCenters(cluster1)
+          val centroide1 = modelBisectingKMeans._1.clusterCenters(cluster1)
           val d1 = distIntraClusters(cluster1)
           var maxResult = 0.0
           for (cluster2 <- 0 to k - 1 if (cluster2 != cluster1)) {
-            val centroide2 = modelBisectingKMeans.clusterCenters(cluster2)
+            val centroide2 = modelBisectingKMeans._1.clusterCenters(cluster2)
             val d2 = distIntraClusters(cluster2)
             val d12 = math.sqrt(Vectors.sqdist(centroide1, centroide2))
             val result = (d1 + d2) / d12
@@ -104,11 +104,11 @@ object IndexDB {
 
       // MEZCLAS GAUSSIANAS
       if (modelGMM != null) {
-        val clusteredData = modelGMM.transform(vectorData)
+        val clusteredData = modelGMM._2
 
         var numClustersFinales = 0
         val distIntraClusters = for (cluster <- 0 to k - 1) yield {
-          val centroide = modelGMM.gaussians(cluster).mean
+          val centroide = modelGMM._1.gaussians(cluster).mean
           val datosCluster = clusteredData.where("prediction ="+ cluster)
           val numDatosCluster = datosCluster.count()
           if (numDatosCluster > 0) {
@@ -121,12 +121,12 @@ object IndexDB {
         var sumElements = 0.0
 
         for (cluster1 <- 0 to k - 1) {
-          val centroide1 = modelGMM.gaussians(cluster1).mean
+          val centroide1 = modelGMM._1.gaussians(cluster1).mean
           val d1 = distIntraClusters(cluster1)
           var maxResult = 0.0
           if (d1 > 0.0) {
             for (cluster2 <- 0 to k - 1 if (cluster1 != cluster2)) {
-              val centroide2 = modelGMM.gaussians(cluster2).mean
+              val centroide2 = modelGMM._1.gaussians(cluster2).mean
               val d2 = distIntraClusters(cluster2)
               if (d2 > 0.0) {
                 val d12 = math.sqrt(Vectors.sqdist(centroide1, centroide2))

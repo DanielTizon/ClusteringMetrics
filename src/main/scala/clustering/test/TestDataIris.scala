@@ -9,6 +9,7 @@ import clustering.metrics.ClusteringIndexes
 import clustering.metrics.Spark
 import clustering.metrics.indexes.IndexRand
 import org.apache.spark.ml.clustering.KMeans
+import org.apache.spark.ml.clustering.GaussianMixture
 
 object TestDataIris {
 
@@ -49,7 +50,8 @@ object TestDataIris {
 
     // EVALUACION EXTERNA - RAND INDEX
     val evidencia = Spark.spark.read.option("header", true).csv("Validacion Externa Iris.csv")
-    val res = new KMeans().setK(3).fit(vectorData).transform(vectorData)
+    val res = new GaussianMixture().setK(3).fit(vectorData).transform(vectorData)
+    res.show
     val randIndex = IndexRand.calculate(res, evidencia)
     println("Rand Index: " + randIndex)
 

@@ -9,13 +9,14 @@ import clustering.metrics.Spark
 import clustering.metrics.Utils.standarize
 import org.apache.spark.ml.clustering.KMeans
 import clustering.metrics.indexes.IndexRand
+import org.apache.spark.ml.clustering.GaussianMixture
 
 object TestIndexes {
 
   def main(args: Array[String]) {
 
     Spark.conf.setAppName("Gaia-Clustering-Metrics")
-      .setMaster("local[*]")
+      //.setMaster("local[*]")
       .set("spark.ui.port", "2001")
       .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .set("spark.sql.warehouse.dir", "spark-warehouse")
@@ -54,7 +55,7 @@ object TestIndexes {
 
     // EVALUACION EXTERNA - RAND INDEX
     val evidencia = Spark.spark.read.option("header", true).csv("/home/tornar/Dropbox/Inteligencia Artificial/TFM/Validacion Externa Gaia.csv")
-    val res = new KMeans().setK(20).fit(scaledVectorData1).transform(scaledVectorData1)
+    val res = new GaussianMixture().setK(20).fit(scaledVectorData1).transform(scaledVectorData1)
     val randIndex = IndexRand.calculate(res, evidencia)
     println("Rand Index: " + randIndex)
 

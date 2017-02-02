@@ -9,6 +9,8 @@ import org.apache.spark.ml.clustering.GaussianMixtureModel
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.ml.clustering.KMeansModel
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions.udf
+import org.apache.spark.sql.functions.col
 
 import clustering.metrics.indexes.IndexBall
 import clustering.metrics.indexes.IndexCH
@@ -18,8 +20,8 @@ import clustering.metrics.indexes.IndexKL
 import clustering.metrics.indexes.IndexRatkowsky
 
 object ClusteringIndexes {
-  
-  case class TuplaModelos(k: Int, modelKMeans: KMeansModel, modelBisectingKMeans: BisectingKMeansModel, modelGMM: GaussianMixtureModel)
+
+  case class TuplaModelos(k: Int, modelKMeans: (KMeansModel, DataFrame), modelBisectingKMeans: (BisectingKMeansModel, DataFrame), modelGMM: (GaussianMixtureModel, DataFrame))
   case class ResultIndex(val method: String, val indexType: String, val winnerK: Int, val indexValue: Double)
 
   val INDEX_BALL = "indexBall"
@@ -36,7 +38,7 @@ object ClusteringIndexes {
   val METHOD_ALL = "all"
 
   def estimateNumberClusters(vectorData: DataFrame, seqK: List[Int] = (2 to 15).toList, index: String = INDEX_ALL, method: String = METHOD_KMEANS,
-                             repeticiones: Int = 1, maxIterations: Int = 20): List[ResultIndex] = {
+                             repeticiones: Int = 1, maxIterations: Int = 20, minProbabilityGMM: Double = 0.5): List[ResultIndex] = {
 
     vectorData.cache()
 
@@ -45,16 +47,21 @@ object ClusteringIndexes {
     for (rep <- 1 to repeticiones) {
 
       val tupleModels = for (k <- seqK) yield {
+        println(s"GENERANDO MODELOS PARA k = $k")
         val modelKMeans = if (method != null && (method == METHOD_KMEANS || method == METHOD_ALL)) {
-          new KMeans().setK(k).setMaxIter(maxIterations).fit(vectorData)
+          val model = new KMeans().setK(k).setMaxIter(maxIterations).fit(vectorData)
+          (model, model.transform(vectorData))
         } else null
 
         val modelBisectingKMeans = if (method != null && (method == METHOD_BISECTING_KMEANS || method == METHOD_ALL)) {
-          new BisectingKMeans().setK(k).setMaxIter(maxIterations).fit(vectorData)
+          val model = new BisectingKMeans().setK(k).setMaxIter(maxIterations).fit(vectorData)
+          (model, model.transform(vectorData))
         } else null
 
         val modelGMM = if (method != null && (method == METHOD_GMM || method == METHOD_ALL)) {
-          new GaussianMixture().setK(k).setMaxIter(maxIterations).fit(vectorData)
+          val model = new GaussianMixture().setK(k).setMaxIter(maxIterations).fit(vectorData)
+          val res = model.transform(vectorData).withColumn("GroupMaxProb", getMax(col("probability"))).where("GroupMaxProb >= " + minProbabilityGMM)
+          (model, res)
         } else null
 
         TuplaModelos(k, modelKMeans, modelBisectingKMeans, modelGMM)
@@ -85,15 +92,19 @@ object ClusteringIndexes {
 
         val newTupleModels = for (k <- List(newSeqK.head, newSeqK.last)) yield {
           val modelKMeans = if (k > 1 && method != null && (method == METHOD_KMEANS || method == METHOD_ALL)) {
-            new KMeans().setK(k).setMaxIter(maxIterations).fit(vectorData)
+            val model = new KMeans().setK(k).setMaxIter(maxIterations).fit(vectorData)
+            (model, model.transform(vectorData))
           } else null
 
           val modelBisectingKMeans = if (k > 1 && method != null && (method == METHOD_BISECTING_KMEANS || method == METHOD_ALL)) {
-            new BisectingKMeans().setK(k).setMaxIter(maxIterations).fit(vectorData)
+            val model = new BisectingKMeans().setK(k).setMaxIter(maxIterations).fit(vectorData)
+            (model, model.transform(vectorData))
           } else null
 
           val modelGMM = if (k > 1 && method != null && (method == METHOD_GMM || method == METHOD_ALL)) {
-            new GaussianMixture().setK(k).setMaxIter(maxIterations).fit(vectorData)
+            val model = new GaussianMixture().setK(k).setMaxIter(maxIterations).fit(vectorData)
+            val res = model.transform(vectorData).withColumn("GroupMaxProb", getMax(col("probability"))).where("GroupMaxProb >= " + minProbabilityGMM)
+            (model, res)
           } else null
 
           TuplaModelos(k, modelKMeans, modelBisectingKMeans, modelGMM)
@@ -104,5 +115,7 @@ object ClusteringIndexes {
     }
     resultadoFinal.toList
   }
+
+  val getMax = udf((vect: org.apache.spark.ml.linalg.Vector) => vect.toArray.max)
 }
 

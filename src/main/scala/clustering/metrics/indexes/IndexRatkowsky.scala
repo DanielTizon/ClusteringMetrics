@@ -46,7 +46,7 @@ object IndexRatkowsky {
 
       // KMEANS
       if (modelKMeans != null) {
-        val clusteredData = modelKMeans.transform(vectorData)
+        val clusteredData = modelKMeans._2
         val allNk = for (cluster <- 0 to k - 1) yield {
           clusteredData.where("prediction = "+cluster).count()
         }
@@ -57,7 +57,7 @@ object IndexRatkowsky {
           val mediaVariable = varData.mean()
           var BGSSvar = 0.0
           for (cluster <- 0 to k - 1) {
-            val ckj = modelKMeans.clusterCenters(cluster)(variable)
+            val ckj = modelKMeans._1.clusterCenters(cluster)(variable)
             val nk = allNk(cluster)
             BGSSvar = BGSSvar + nk * math.pow(ckj - mediaVariable, 2)
           }
@@ -74,7 +74,7 @@ object IndexRatkowsky {
 
       // BISECTING KMEANS
       if (modelBisectingKMeans != null) {
-        val clusteredData = modelBisectingKMeans.transform(vectorData)
+        val clusteredData = modelBisectingKMeans._2
         val allNk = for (cluster <- 0 to k - 1) yield {
           clusteredData.where("prediction = "+cluster).count()
         }
@@ -85,7 +85,7 @@ object IndexRatkowsky {
           val mediaVariable = varData.mean()
           var BGSSvar = 0.0
           for (cluster <- 0 to k - 1) {
-            val ckj = modelBisectingKMeans.clusterCenters(cluster)(variable)
+            val ckj = modelBisectingKMeans._1.clusterCenters(cluster)(variable)
             val nk = allNk(cluster)
             BGSSvar = BGSSvar + nk * math.pow(ckj - mediaVariable, 2)
           }
@@ -102,7 +102,7 @@ object IndexRatkowsky {
 
       // MEZCLAS GAUSSIANAS
       if (modelGMM != null) {
-        val clusteredData = modelGMM.transform(vectorData)
+        val clusteredData = modelGMM._2
 
         var numClustersFinales = 0
 
@@ -118,7 +118,7 @@ object IndexRatkowsky {
           val mediaVariable = varData.mean()
           var BGSSvar = 0.0
           for (cluster <- 0 to k - 1) {
-            val ckj = modelGMM.gaussians(cluster).mean(variable)
+            val ckj = modelGMM._1.gaussians(cluster).mean(variable)
             val Nk = allNk(cluster)
             if (Nk > 0) {
               BGSSvar = BGSSvar + Nk * math.pow(ckj - mediaVariable, 2)
