@@ -11,7 +11,7 @@ import org.apache.spark.ml.clustering.KMeans
 import clustering.metrics.indexes.IndexRand
 import org.apache.spark.ml.clustering.GaussianMixture
 
-object TestIndexes {
+object TestGaia {
 
   def main(args: Array[String]) {
 
