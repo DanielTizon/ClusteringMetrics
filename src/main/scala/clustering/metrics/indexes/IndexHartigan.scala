@@ -35,6 +35,7 @@ object IndexHartigan {
 
     for (modelsK <- modelTuples) {
       val k = modelsK.k
+      println(s"CALCULANDO HARTIGAN INDEX PARA k = $k")
       val modelKMeans = modelsK.modelKMeans
       val modelBisectingKMeans = modelsK.modelBisectingKMeans
       val modelGMM = modelsK.modelGMM

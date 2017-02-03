@@ -34,6 +34,7 @@ object IndexDB {
 
     for (modelsK <- modelTuples) {
       val k = modelsK.k
+      println(s"CALCULANDO DB INDEX PARA k = $k")
       val modelKMeans = modelsK.modelKMeans
       val modelBisectingKMeans = modelsK.modelBisectingKMeans
       val modelGMM = modelsK.modelGMM

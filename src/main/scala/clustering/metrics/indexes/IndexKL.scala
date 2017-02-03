@@ -41,6 +41,7 @@ object IndexKL {
 
     for (modelsK <- modelTuples if (modelsK.k > 1)) {
       val k = modelsK.k
+      println(s"CALCULANDO KL INDEX PARA k = $k")
       val modelKMeans = modelsK.modelKMeans
       val modelBisectingKMeans = modelsK.modelBisectingKMeans
       val modelGMM = modelsK.modelGMM

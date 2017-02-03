@@ -40,6 +40,7 @@ object IndexCH {
 
     for (modelsK <- modelTuples) {
       val k = modelsK.k
+      println(s"CALCULANDO CH INDEX PARA k = $k")
       val modelKMeans = modelsK.modelKMeans
       val modelBisectingKMeans = modelsK.modelBisectingKMeans
       val modelGMM = modelsK.modelGMM
