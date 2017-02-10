@@ -57,7 +57,7 @@ object IndexCH {
 
         for (cluster <- 0 to k - 1) {
           // nk = numero de objetos en cluster 
-          val nk = clusteredData.where("prediction = "+cluster).count
+          val nk = clusteredData.where("prediction = " + cluster).count
           val centroide = modelKMeans._1.clusterCenters(cluster)
           Bq = Bq + (nk * Vectors.sqdist(centroideDataSet.asML, centroide))
         }
@@ -78,7 +78,7 @@ object IndexCH {
 
         for (cluster <- 0 to k - 1) {
           // nk = numero de objetos en cluster 
-          val nk = clusteredData.where("prediction = "+ cluster).count
+          val nk = clusteredData.where("prediction = " + cluster).count
           val centroide = modelBisectingKMeans._1.clusterCenters(cluster)
           Bq = Bq + (nk * Vectors.sqdist(centroideDataSet.asML, centroide))
         }
@@ -94,7 +94,7 @@ object IndexCH {
         var numClustersFinales = 0
         var Wq = 0.0
         for (cluster <- 0 to k - 1) {
-          val clusterData = clusteredData.where("prediction = "+cluster)
+          val clusterData = clusteredData.where("prediction = " + cluster)
           val numObjetosCluster = clusterData.count()
           if (numObjetosCluster > 0) {
             numClustersFinales = numClustersFinales + 1
@@ -108,7 +108,7 @@ object IndexCH {
 
         for (cluster <- 0 to k - 1) {
           // nk = numero de objetos en cluster 
-          val nk = clusteredData.where("prediction = "+cluster).count
+          val nk = clusteredData.where("prediction = " + cluster).count
           val centroide = modelGMM._1.gaussians(cluster).mean
           Bq = Bq + (nk * Vectors.sqdist(centroideDataSet.asML, centroide))
         }
@@ -121,18 +121,30 @@ object IndexCH {
     val listResultFinal = ListBuffer.empty[ResultIndex]
 
     if (!CHIndexesKMeans.isEmpty) {
-      val result = CHIndexesKMeans.sortBy(x => x._2).last
-      listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_CH, result._1, result._2)
+      val result = CHIndexesKMeans.sortBy(x => x._2)
+      var points = 0
+      for (result_value <- result) {
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_CH, result_value._1, result_value._2, points)
+        points = points + 1
+      }
     }
 
     if (!CHIndexesBisectingKMeans.isEmpty) {
-      val result = CHIndexesBisectingKMeans.sortBy(x => x._2).last
-      listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_CH, result._1, result._2)
+      val result = CHIndexesBisectingKMeans.sortBy(x => x._2)
+      var points = 0
+      for (result_value <- result) {
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_CH, result_value._1, result_value._2, points)
+        points = points + 1
+      }
     }
 
     if (!CHIndexesGMM.isEmpty) {
-      val result = CHIndexesGMM.sortBy(x => x._2).last
-      listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_CH, result._1, result._2)
+      val result = CHIndexesGMM.sortBy(x => x._2)
+      var points = 0
+      for (result_value <- result) {
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_CH, result_value._1, result_value._2, points)
+        points = points + 1
+      }
     }
 
     listResultFinal

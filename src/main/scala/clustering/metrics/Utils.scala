@@ -15,7 +15,26 @@ object Utils {
     val scalerModel = scaler.fit(vectorData)
     scalerModel.transform(vectorData).drop("features").withColumnRenamed("scaledFeatures", "features")
   }
-  
+
+  val getColor = udf((intValue: Int) => {
+    if (intValue == 0) "aliceblue"
+    else if (intValue == 1) "antiquewhite"
+    else if (intValue == 2) "blueviolet"
+    else if (intValue == 3) "blue"
+    else if (intValue == 4) "chartreuse"
+    else if (intValue == 5) "brown1"
+    else if (intValue == 6) "darkgoldenrod1"
+    else if (intValue == 7) "coral"
+    else if (intValue == 8) "cornflowerblue"
+    else if (intValue == 9) "chartreuse4"
+    else if (intValue == 10) "cadetblue4"
+    else if (intValue == 11) "burlywood4"
+    else if (intValue == 12) "antiquewhite3"
+    else if (intValue == 13) "azure3"
+    else if (intValue == 14) "beige"
+    else "bisque3"
+  })
+
   /**
    * CALCULO DE COORDENADAS
    */

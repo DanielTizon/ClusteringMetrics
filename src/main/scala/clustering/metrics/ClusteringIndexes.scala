@@ -22,7 +22,7 @@ import clustering.metrics.indexes.IndexRatkowsky
 object ClusteringIndexes {
 
   case class TuplaModelos(k: Int, modelKMeans: (KMeansModel, DataFrame), modelBisectingKMeans: (BisectingKMeansModel, DataFrame), modelGMM: (GaussianMixtureModel, DataFrame))
-  case class ResultIndex(val method: String, val indexType: String, val winnerK: Int, val indexValue: Double)
+  case class ResultIndex(val method: String, val indexType: String, val winnerK: Int, val indexValue: Double, val points: Int)
 
   val INDEX_BALL = "indexBall"
   val INDEX_CH = "indexCH"

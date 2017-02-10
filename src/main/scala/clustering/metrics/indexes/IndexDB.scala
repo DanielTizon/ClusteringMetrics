@@ -45,7 +45,7 @@ object IndexDB {
 
         val distIntraClusters = for (cluster <- 0 to k - 1) yield {
           val centroide = modelKMeans._1.clusterCenters(cluster)
-          val datosCluster = clusteredData.where("prediction ="+ cluster)
+          val datosCluster = clusteredData.where("prediction =" + cluster)
           val numDatosCluster = datosCluster.count()
           val distPuntosCentroide = datosCluster.map(x => Vectors.sqdist(centroide, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum
           math.sqrt(distPuntosCentroide / numDatosCluster)
@@ -77,7 +77,7 @@ object IndexDB {
 
         val distIntraClusters = for (cluster <- 0 to k - 1) yield {
           val centroide = modelBisectingKMeans._1.clusterCenters(cluster)
-          val datosCluster = clusteredData.where("prediction = "+cluster)
+          val datosCluster = clusteredData.where("prediction = " + cluster)
           val numDatosCluster = datosCluster.count()
           val distPuntosCentroide = datosCluster.map(x => Vectors.sqdist(centroide, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum
           math.sqrt(distPuntosCentroide / numDatosCluster)
@@ -110,7 +110,7 @@ object IndexDB {
         var numClustersFinales = 0
         val distIntraClusters = for (cluster <- 0 to k - 1) yield {
           val centroide = modelGMM._1.gaussians(cluster).mean
-          val datosCluster = clusteredData.where("prediction ="+ cluster)
+          val datosCluster = clusteredData.where("prediction =" + cluster)
           val numDatosCluster = datosCluster.count()
           if (numDatosCluster > 0) {
             numClustersFinales = numClustersFinales + 1
@@ -147,18 +147,30 @@ object IndexDB {
     val listResultFinal = ListBuffer.empty[ResultIndex]
 
     if (!DBIndexesKMeans.isEmpty) {
-      val result = DBIndexesKMeans.sortBy(x => x._2).head
-      listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_DB, result._1, result._2)
+      val result = DBIndexesKMeans.sortBy(x => x._2).reverse
+      var points = 0
+      for (result_value <- result) {
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_DB, result_value._1, result_value._2, points)
+        points = points + 1
+      }
     }
 
     if (!DBIndexesBisectingKMeans.isEmpty) {
-      val result = DBIndexesBisectingKMeans.sortBy(x => x._2).head
-      listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_DB, result._1, result._2)
+      val result = DBIndexesBisectingKMeans.sortBy(x => x._2).reverse
+      var points = 0
+      for (result_value <- result) {
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_DB, result_value._1, result_value._2, points)
+        points = points + 1
+      }
     }
 
     if (!DBIndexesGMM.isEmpty) {
-      val result = DBIndexesGMM.sortBy(x => x._2).head
-      listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_DB, result._1, result._2)
+      val result = DBIndexesGMM.sortBy(x => x._2).reverse
+      var points = 0
+      for (result_value <- result) {
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_DB, result_value._1, result_value._2, points)
+        points = points + 1
+      }
     }
 
     listResultFinal

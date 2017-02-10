@@ -31,8 +31,7 @@ object IndexRatkowsky {
   def calculate(modelTuples: List[TuplaModelos], vectorData: DataFrame) = {
     println(s"RATKOWSKY INDEX -> ${modelTuples.map(_.k)}")
 
-
-    val numVariables =  vectorData.head().getAs[org.apache.spark.ml.linalg.Vector]("features").size
+    val numVariables = vectorData.head().getAs[org.apache.spark.ml.linalg.Vector]("features").size
 
     val ratkowskyIndexesKMeans: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
     val ratkowskyIndexesBisectingKMeans: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
@@ -49,7 +48,7 @@ object IndexRatkowsky {
       if (modelKMeans != null) {
         val clusteredData = modelKMeans._2
         val allNk = for (cluster <- 0 to k - 1) yield {
-          clusteredData.where("prediction = "+cluster).count()
+          clusteredData.where("prediction = " + cluster).count()
         }
 
         var result = 0.0
@@ -77,7 +76,7 @@ object IndexRatkowsky {
       if (modelBisectingKMeans != null) {
         val clusteredData = modelBisectingKMeans._2
         val allNk = for (cluster <- 0 to k - 1) yield {
-          clusteredData.where("prediction = "+cluster).count()
+          clusteredData.where("prediction = " + cluster).count()
         }
 
         var result = 0.0
@@ -108,7 +107,7 @@ object IndexRatkowsky {
         var numClustersFinales = 0
 
         val allNk = for (cluster <- 0 to k - 1) yield {
-          val numElementscluster = clusteredData.where("prediction ="+ cluster).count()
+          val numElementscluster = clusteredData.where("prediction =" + cluster).count()
           if (numElementscluster > 0) { numClustersFinales = numClustersFinales + 1 }
           numElementscluster
         }
@@ -134,24 +133,36 @@ object IndexRatkowsky {
         ratkowskyIndexesGMM += Tuple2(numClustersFinales, ratkowskyIndex)
       }
     }
-    
+
     val listResultFinal = ListBuffer.empty[ResultIndex]
 
-     if (!ratkowskyIndexesKMeans.isEmpty) {
-      val result = ratkowskyIndexesKMeans.sortBy(x => x._2).last
-      listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_RATKOWSKY, result._1, result._2)
+    if (!ratkowskyIndexesKMeans.isEmpty) {
+      val result = ratkowskyIndexesKMeans.sortBy(x => x._2)
+      var points = 0
+      for (result_value <- result) {
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_RATKOWSKY, result_value._1, result_value._2, points)
+        points = points + 1
+      }
     }
 
     if (!ratkowskyIndexesBisectingKMeans.isEmpty) {
-      val result = ratkowskyIndexesBisectingKMeans.sortBy(x => x._2).last
-      listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_RATKOWSKY, result._1, result._2)
+      val result = ratkowskyIndexesBisectingKMeans.sortBy(x => x._2)
+      var points = 0
+      for (result_value <- result) {
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_RATKOWSKY, result_value._1, result_value._2, points)
+        points = points + 1
+      }
     }
-    
-     if (!ratkowskyIndexesGMM.isEmpty) {
-      val result = ratkowskyIndexesGMM.sortBy(x => x._2).last
-      listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_RATKOWSKY, result._1, result._2)
+
+    if (!ratkowskyIndexesGMM.isEmpty) {
+      val result = ratkowskyIndexesGMM.sortBy(x => x._2)
+      var points = 0
+      for (result_value <- result) {
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_RATKOWSKY, result_value._1, result_value._2, points)
+        points = points + 1
+      }
     }
-     
-     listResultFinal
+
+    listResultFinal
   }
 }

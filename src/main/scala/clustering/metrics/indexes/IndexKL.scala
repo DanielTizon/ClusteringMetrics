@@ -107,8 +107,11 @@ object IndexKL {
         (x(0)._1, KLIndex)
       }).toList
 
-      val result = KLIndexes.sortBy(x => x._2).last
-      listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_KL, result._1, result._2)
+      val result = KLIndexes.sortBy(x => x._2)
+      var points = 0
+      for (result_value <- result) {
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_KL, result_value._1, result_value._2, points)
+      }
     }
 
     if (!WqByKBisectingKmeans.isEmpty) {
@@ -138,8 +141,11 @@ object IndexKL {
         (x(0)._1, KLIndex)
       }).toList
 
-      val result = KLIndexes.sortBy(x => x._2).last
-      listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_KL, result._1, result._2)
+      val result = KLIndexes.sortBy(x => x._2)
+      var points = 0
+      for (result_value <- result) {
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_KL, result_value._1, result_value._2, points)
+      }
     }
 
     if (!WqByKGMM.isEmpty) {
@@ -169,8 +175,11 @@ object IndexKL {
         (x(0)._1, KLIndex)
       }).toList
 
-      val result = KLIndexes.sortBy(x => x._2).last
-      listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_KL, result._1, result._2)
+      val result = KLIndexes.sortBy(x => x._2)
+      var points = 0
+      for (result_value <- result) {
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_KL, result_value._1, result_value._2, points)
+      }
     }
 
     listResultFinal

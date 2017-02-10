@@ -60,7 +60,7 @@ object IndexHartigan {
         var numClustersFinales = 0
         var Wq = 0.0
         for (cluster <- 0 to k - 1) {
-          val clusterData = clusteredData.where("prediction = "+cluster)
+          val clusterData = clusteredData.where("prediction = " + cluster)
           val numObjetosCluster = clusterData.count()
           if (numObjetosCluster > 0) {
             numClustersFinales = numClustersFinales + 1
@@ -89,8 +89,12 @@ object IndexHartigan {
         (hartiganIndex2._1, Math.abs(hartiganIndex1._2 - hartiganIndex2._2))
       }).toList
 
-      val result = listaSlopes.sortBy(x => x._2).last
-      listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_HARTIGAN, result._1, result._2)
+      val result = listaSlopes.sortBy(x => x._2)
+      var points = 0
+      for (result_value <- result) {
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_HARTIGAN, result_value._1, result_value._2, points)
+        points = points + 1
+      }
     }
 
     if (!WqByKBisectingKmeans.isEmpty) {
@@ -108,8 +112,12 @@ object IndexHartigan {
         (hartiganIndex2._1, Math.abs(hartiganIndex1._2 - hartiganIndex2._2))
       }).toList
 
-      val result = listaSlopes.sortBy(x => x._2).last
-      listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_HARTIGAN, result._1, result._2)
+      val result = listaSlopes.sortBy(x => x._2)
+      var points = 0
+      for (result_value <- result) {
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_HARTIGAN, result_value._1, result_value._2, points)
+        points = points + 1
+      }
     }
 
     if (!WqByKGMM.isEmpty) {
@@ -127,8 +135,12 @@ object IndexHartigan {
         (hartiganIndex2._1, Math.abs(hartiganIndex1._2 - hartiganIndex2._2))
       }).toList
 
-      val result = listaSlopes.sortBy(x => x._2).last
-      listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_HARTIGAN, result._1, result._2)
+      val result = listaSlopes.sortBy(x => x._2)
+      var points = 0
+      for (result_value <- result) {
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_HARTIGAN, result_value._1, result_value._2, points)
+        points = points + 1
+      }
     }
 
     listResultFinal
