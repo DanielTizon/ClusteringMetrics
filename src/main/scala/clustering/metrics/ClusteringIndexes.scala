@@ -50,18 +50,18 @@ object ClusteringIndexes {
         println(s"GENERANDO MODELOS PARA k = $k")
         val modelKMeans = if (method != null && (method == METHOD_KMEANS || method == METHOD_ALL)) {
           val model = new KMeans().setK(k).setMaxIter(maxIterations).fit(vectorData)
-          (model, model.transform(vectorData))
+          (model, model.transform(vectorData).cache())
         } else null
 
         val modelBisectingKMeans = if (method != null && (method == METHOD_BISECTING_KMEANS || method == METHOD_ALL)) {
           val model = new BisectingKMeans().setK(k).setMaxIter(maxIterations).fit(vectorData)
-          (model, model.transform(vectorData))
+          (model, model.transform(vectorData).cache())
         } else null
 
         val modelGMM = if (method != null && (method == METHOD_GMM || method == METHOD_ALL)) {
           val model = new GaussianMixture().setK(k).setMaxIter(maxIterations).fit(vectorData)
           val res = model.transform(vectorData).withColumn("GroupMaxProb", getMax(col("probability"))).where("GroupMaxProb >= " + minProbabilityGMM)
-          (model, res)
+          (model, res.cache())
         } else null
 
         TuplaModelos(k, modelKMeans, modelBisectingKMeans, modelGMM)

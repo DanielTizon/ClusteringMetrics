@@ -9,6 +9,17 @@ import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.functions.udf
 
 object Utils {
+  
+  def removeOutliers(vectorData: DataFrame, factor: Int): DataFrame = {
+    vectorData.filter(x => {
+      val data = x.getAs[org.apache.spark.ml.linalg.Vector]("features")
+      var isOutlier = false
+      for (i <- 0 to data.size-1) {
+        if (data(i) > factor || data(i) < -factor) isOutlier = true
+      }
+      !isOutlier
+    })
+  }
 
   def standarize(vectorData: DataFrame): DataFrame = {
     val scaler = new StandardScaler().setInputCol("features").setOutputCol("scaledFeatures").setWithStd(true).setWithMean(true)
@@ -91,11 +102,11 @@ object Utils {
     columnsDouble.foreach { x =>
       tgasDF = tgasDF.withColumn(x, col(x).cast("Double"))
     }
-    tgasDF.withColumn("X", Utils.getX(col("parallax"), col("ra"), col("dec")))
-      .withColumn("Y", Utils.getY(col("parallax"), col("ra"), col("dec")))
-      .withColumn("Z", Utils.getZ(col("parallax"), col("ra"), col("dec")))
-      .withColumn("VTA", Utils.getVelocidadTransversal(col("parallax"), col("pmra")))
-      .withColumn("VTD", Utils.getVelocidadTransversal(col("parallax"), col("pmdec")))
+    tgasDF.withColumn("X", getX(col("parallax"), col("ra"), col("dec")))
+      .withColumn("Y", getY(col("parallax"), col("ra"), col("dec")))
+      .withColumn("Z", getZ(col("parallax"), col("ra"), col("dec")))
+      .withColumn("VTA", getVelocidadTransversal(col("parallax"), col("pmra")))
+      .withColumn("VTD", getVelocidadTransversal(col("parallax"), col("pmdec")))
       .drop("ra").drop("dec").drop("parallax").drop("pmra").drop("pmdec")
       .write.parquet(rutaFinal)
   }
