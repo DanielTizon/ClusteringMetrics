@@ -36,7 +36,7 @@ object IndexCH {
 
     val CHIndexesKMeans: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
     val CHIndexesBisectingKMeans: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
-    val CHIndexesGMM: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
+    val CHIndexesGMM: ListBuffer[Tuple3[Int, Double, Int]] = ListBuffer[Tuple3[Int, Double, Int]]()
 
     for (modelsK <- modelTuples) {
       val k = modelsK.k
@@ -114,7 +114,7 @@ object IndexCH {
         }
 
         val CHIndex = (Bq / (numClustersFinales - 1)) / (Wq / (n - numClustersFinales))
-        CHIndexesGMM += Tuple2(numClustersFinales, CHIndex)
+        CHIndexesGMM += Tuple3(numClustersFinales, CHIndex, k)
       }
     }
 
@@ -124,7 +124,7 @@ object IndexCH {
       val result = CHIndexesKMeans.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_CH, result_value._1, result_value._2, points)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_CH, result_value._1, result_value._2, points, result_value._1)
         points = points + 1
       }
     }
@@ -133,7 +133,7 @@ object IndexCH {
       val result = CHIndexesBisectingKMeans.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_CH, result_value._1, result_value._2, points)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_CH, result_value._1, result_value._2, points, result_value._1)
         points = points + 1
       }
     }
@@ -142,7 +142,7 @@ object IndexCH {
       val result = CHIndexesGMM.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_CH, result_value._1, result_value._2, points)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_CH, result_value._1, result_value._2, points, result_value._3)
         points = points + 1
       }
     }

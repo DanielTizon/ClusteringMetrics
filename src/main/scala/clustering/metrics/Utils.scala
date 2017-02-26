@@ -28,22 +28,22 @@ object Utils {
   }
 
   val getColor = udf((intValue: Int) => {
-    if (intValue == 0) "aliceblue"
-    else if (intValue == 1) "antiquewhite"
-    else if (intValue == 2) "blueviolet"
-    else if (intValue == 3) "blue"
-    else if (intValue == 4) "chartreuse"
-    else if (intValue == 5) "brown1"
-    else if (intValue == 6) "darkgoldenrod1"
-    else if (intValue == 7) "coral"
-    else if (intValue == 8) "cornflowerblue"
-    else if (intValue == 9) "chartreuse4"
-    else if (intValue == 10) "cadetblue4"
-    else if (intValue == 11) "burlywood4"
-    else if (intValue == 12) "antiquewhite3"
-    else if (intValue == 13) "azure3"
-    else if (intValue == 14) "beige"
-    else "bisque3"
+    if (intValue == 0) "gray"
+    else if (intValue == 1) "lightcoral"
+    else if (intValue == 2) "tan"
+    else if (intValue == 3) "g"
+    else if (intValue == 4) "c"
+    else if (intValue == 5) "m"
+    else if (intValue == 6) "plum"
+    else if (intValue == 7) "b"
+    else if (intValue == 8) "lightblue"
+    else if (intValue == 9) "steelblue"
+    else if (intValue == 10) "turquoise"
+    else if (intValue == 11) "pink"
+    else if (intValue == 12) "silver"
+    else if (intValue == 13) "mediumseagreen"
+    else if (intValue == 14) "y"
+    else "r"
   })
 
   /**

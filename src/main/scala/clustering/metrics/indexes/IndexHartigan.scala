@@ -31,7 +31,7 @@ object IndexHartigan {
     val n = vectorData.count()
     val WqByKKmeans: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
     val WqByKBisectingKmeans: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
-    val WqByKGMM: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
+    val WqByKGMM: ListBuffer[Tuple3[Int, Double, Int]] = ListBuffer[Tuple3[Int, Double, Int]]()
 
     for (modelsK <- modelTuples) {
       val k = modelsK.k
@@ -68,7 +68,7 @@ object IndexHartigan {
             Wq = Wq + clusterData.map(x => Vectors.sqdist(centroide, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum
           }
         }
-        WqByKGMM += Tuple2(numClustersFinales, Wq)
+        WqByKGMM += Tuple3(numClustersFinales, Wq, k)
       }
     }
 
@@ -92,7 +92,7 @@ object IndexHartigan {
       val result = listaSlopes.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_HARTIGAN, result_value._1, result_value._2, points)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_HARTIGAN, result_value._1, result_value._2, points, result_value._1)
         points = points + 1
       }
     }
@@ -115,7 +115,7 @@ object IndexHartigan {
       val result = listaSlopes.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_HARTIGAN, result_value._1, result_value._2, points)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_HARTIGAN, result_value._1, result_value._2, points, result_value._1)
         points = points + 1
       }
     }
@@ -126,19 +126,19 @@ object IndexHartigan {
         val k1 = x(0)._1
         val Wq2 = x(1)._2
         val hartiganIndex = ((Wq1 / Wq2) - 1) * (n - k1 - 1)
-        (k1, hartiganIndex)
+        (k1, hartiganIndex, x(0)._3)
       }).toList
 
       val listaSlopes = hartiganIndexes.sortBy(x => x._1).sliding(2).map(x => {
         val hartiganIndex1 = x(0)
         val hartiganIndex2 = x(1)
-        (hartiganIndex2._1, Math.abs(hartiganIndex1._2 - hartiganIndex2._2))
+        (hartiganIndex2._1, Math.abs(hartiganIndex1._2 - hartiganIndex2._2), hartiganIndex2._3)
       }).toList
 
       val result = listaSlopes.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_HARTIGAN, result_value._1, result_value._2, points)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_HARTIGAN, result_value._1, result_value._2, points, result_value._3)
         points = points + 1
       }
     }

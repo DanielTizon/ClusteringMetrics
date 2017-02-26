@@ -30,7 +30,7 @@ object IndexBall {
 
     val ballIndexesKMeans: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
     val ballIndexesBisectingKMeans: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
-    val ballIndexesGMM: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
+    val ballIndexesGMM: ListBuffer[Tuple3[Int, Double, Int]] = ListBuffer[Tuple3[Int, Double, Int]]()
 
     for (modelsK <- modelTuples) {
       val k = modelsK.k
@@ -71,7 +71,7 @@ object IndexBall {
         }
 
         val ballIndex = Wq / numClustersFinales
-        ballIndexesGMM += Tuple2(numClustersFinales, ballIndex)
+        ballIndexesGMM += Tuple3(numClustersFinales, ballIndex, k)
       }
     }
 
@@ -87,7 +87,7 @@ object IndexBall {
       val result = listaSlopes.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_BALL, result_value._1, result_value._2, points)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_BALL, result_value._1, result_value._2, points, result_value._1)
         points = points + 1
       }
     }
@@ -102,7 +102,7 @@ object IndexBall {
       val result = listaSlopes.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_BALL, result_value._1, result_value._2, points)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_BALL, result_value._1, result_value._2, points, result_value._1)
         points = points + 1
       }
     }
@@ -111,13 +111,13 @@ object IndexBall {
       val listaSlopes = ballIndexesGMM.sortBy(x => x._1).sliding(2).map(x => {
         val ballIndex1 = x(0)
         val ballIndex2 = x(1)
-        (ballIndex2._1, math.abs(ballIndex1._2 - ballIndex2._2))
+        (ballIndex2._1, math.abs(ballIndex1._2 - ballIndex2._2), ballIndex2._3)
       }).toList
 
       val result = listaSlopes.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_BALL, result_value._1, result_value._2, points)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_BALL, result_value._1, result_value._2, points, result_value._3)
         points = points + 1
       }
     }

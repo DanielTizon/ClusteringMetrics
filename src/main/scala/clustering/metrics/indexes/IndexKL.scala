@@ -37,7 +37,7 @@ object IndexKL {
 
     val WqByKKmeans: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
     val WqByKBisectingKmeans: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
-    val WqByKGMM: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
+    val WqByKGMM: ListBuffer[Tuple3[Int, Double, Int]] = ListBuffer[Tuple3[Int, Double, Int]]()
 
     for (modelsK <- modelTuples if (modelsK.k > 1)) {
       val k = modelsK.k
@@ -74,7 +74,7 @@ object IndexKL {
             Wq = Wq + clusterData.map(x => Vectors.sqdist(centroide, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum
           }
         }
-        WqByKGMM += Tuple2(numClustersFinales, Wq)
+        WqByKGMM += Tuple3(numClustersFinales, Wq, k)
       }
     }
 
@@ -110,7 +110,8 @@ object IndexKL {
       val result = KLIndexes.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_KL, result_value._1, result_value._2, points)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_KL, result_value._1, result_value._2, points, result_value._1)
+        points = points + 1
       }
     }
 
@@ -144,7 +145,8 @@ object IndexKL {
       val result = KLIndexes.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_KL, result_value._1, result_value._2, points)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_KL, result_value._1, result_value._2, points, result_value._1)
+        points = points + 1
       }
     }
 
@@ -153,7 +155,7 @@ object IndexKL {
         val features = vectorData.rdd.map(x => org.apache.spark.mllib.linalg.Vectors.dense(x.getAs[org.apache.spark.ml.linalg.Vector]("features").toArray))
         val centroideDataSet = Statistics.colStats(features).mean
         val Wq = vectorData.map(x => Vectors.sqdist(centroideDataSet.asML, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum()
-        WqByKGMM += Tuple2(1, Wq)
+        WqByKGMM += Tuple3(1, Wq, 1)
       }
 
       val DIFFsq = WqByKGMM.sortBy(x => x._1).sliding(2).map(x => {
@@ -165,20 +167,21 @@ object IndexKL {
         val resAnterior = (math.pow((qAnterior), (2 / p))) * WqAnterior
         val resActual = (math.pow(qActual, (2 / p))) * WqActual
         val DIFFq = resAnterior - resActual
-        (qActual, DIFFq)
+        (qActual, DIFFq, x(1)._3)
       }).toList
 
       val KLIndexes = DIFFsq.sortBy(x => x._1).sliding(2).map(x => {
         val DIFFq1 = x(0)._2
         val DIFFq2 = x(1)._2
         val KLIndex = math.abs(DIFFq1 / DIFFq2)
-        (x(0)._1, KLIndex)
+        (x(0)._1, KLIndex, x(0)._3)
       }).toList
 
       val result = KLIndexes.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_KL, result_value._1, result_value._2, points)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_KL, result_value._1, result_value._2, points, result_value._3)
+        points = points + 1
       }
     }
 

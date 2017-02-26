@@ -22,7 +22,7 @@ import clustering.metrics.indexes.IndexRatkowsky
 object ClusteringIndexes {
 
   case class TuplaModelos(k: Int, modelKMeans: (KMeansModel, DataFrame), modelBisectingKMeans: (BisectingKMeansModel, DataFrame), modelGMM: (GaussianMixtureModel, DataFrame))
-  case class ResultIndex(val method: String, val indexType: String, val winnerK: Int, val indexValue: Double, val points: Int)
+  case class ResultIndex(val method: String, val indexType: String, val numGruposFinal: Int, val indexValue: Double, val points: Int, val kInicial: Int)
 
   val INDEX_BALL = "indexBall"
   val INDEX_CH = "indexCH"
@@ -61,6 +61,8 @@ object ClusteringIndexes {
         val modelGMM = if (method != null && (method == METHOD_GMM || method == METHOD_ALL)) {
           val model = new GaussianMixture().setK(k).setMaxIter(maxIterations).fit(vectorData)
           val res = model.transform(vectorData).withColumn("GroupMaxProb", getMax(col("probability"))).where("GroupMaxProb >= " + minProbabilityGMM)
+          val numRealGrupos = res.select("prediction").distinct()
+          println(s"MODELO GMM CON k = $k TIENE SOLO $numRealGrupos GRUPOS REALES")
           (model, res.cache())
         } else null
 

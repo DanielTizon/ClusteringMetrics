@@ -35,7 +35,7 @@ object IndexRatkowsky {
 
     val ratkowskyIndexesKMeans: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
     val ratkowskyIndexesBisectingKMeans: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
-    val ratkowskyIndexesGMM: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
+    val ratkowskyIndexesGMM: ListBuffer[Tuple3[Int, Double, Int]] = ListBuffer[Tuple3[Int, Double, Int]]()
 
     for (modelsK <- modelTuples) {
       val k = modelsK.k
@@ -130,7 +130,7 @@ object IndexRatkowsky {
         }
 
         val ratkowskyIndex = math.sqrt((result / numVariables) / numClustersFinales)
-        ratkowskyIndexesGMM += Tuple2(numClustersFinales, ratkowskyIndex)
+        ratkowskyIndexesGMM += Tuple3(numClustersFinales, ratkowskyIndex, k)
       }
     }
 
@@ -140,7 +140,7 @@ object IndexRatkowsky {
       val result = ratkowskyIndexesKMeans.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_RATKOWSKY, result_value._1, result_value._2, points)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_RATKOWSKY, result_value._1, result_value._2, points, result_value._1)
         points = points + 1
       }
     }
@@ -149,7 +149,7 @@ object IndexRatkowsky {
       val result = ratkowskyIndexesBisectingKMeans.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_RATKOWSKY, result_value._1, result_value._2, points)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_RATKOWSKY, result_value._1, result_value._2, points, result_value._1)
         points = points + 1
       }
     }
@@ -158,7 +158,7 @@ object IndexRatkowsky {
       val result = ratkowskyIndexesGMM.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_RATKOWSKY, result_value._1, result_value._2, points)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_RATKOWSKY, result_value._1, result_value._2, points, result_value._3)
         points = points + 1
       }
     }

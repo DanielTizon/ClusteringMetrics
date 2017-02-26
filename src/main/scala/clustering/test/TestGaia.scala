@@ -39,7 +39,7 @@ object TestGaia {
 
     val tIni1 = new Date().getTime
     val result1 = ClusteringIndexes.estimateNumberClusters(scaledVectorData, seqK.toList, index = index, method = method, repeticiones = numRepeticiones, minProbabilityGMM = minProbabilityGMM)
-    println(s"${result1.sortBy(x => x.points).reverse.mkString("\n")}")
+    println(result1.sortBy(x => x.points).reverse.mkString("\n"))
     
     val tFin1 = new Date().getTime
     val tEmpleado1 = (tFin1 - tIni1) / (60000.0 * numRepeticiones)    
