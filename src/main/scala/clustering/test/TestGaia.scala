@@ -25,7 +25,7 @@ object TestGaia {
       .set("spark.sql.warehouse.dir", "spark-warehouse")
 
     val numRepeticiones = 1
-    val maxIterations = 20
+    val maxIterations = 100
     val minProbabilityGMM = 0.75
 
     val index = ClusteringIndexes.INDEX_ALL
@@ -38,11 +38,11 @@ object TestGaia {
     val scaledVectorData = removeOutliers(standarize(vectorData), 5)
 
     val tIni1 = new Date().getTime
-    val result1 = ClusteringIndexes.estimateNumberClusters(scaledVectorData, seqK.toList, index = index, method = method, repeticiones = numRepeticiones, minProbabilityGMM = minProbabilityGMM)
+    val result1 = ClusteringIndexes.estimateNumberClusters(scaledVectorData, seqK.toList, index = index, method = method, repeticiones = numRepeticiones, minProbabilityGMM = minProbabilityGMM, maxIterations = maxIterations)
     println(result1.sortBy(x => x.points).reverse.mkString("\n"))
     
     val tFin1 = new Date().getTime
-    val tEmpleado1 = (tFin1 - tIni1) / (60000.0 * numRepeticiones)    
+    val tEmpleado1 = (tFin1 - tIni1) / (60000.0 * numRepeticiones)
     println(s"TIEMPO EMPLEADO EXPERIMENTO: $tEmpleado1")
 
     // EVALUACION EXTERNA - RAND INDEX
