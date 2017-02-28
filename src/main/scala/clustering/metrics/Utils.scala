@@ -27,23 +27,19 @@ object Utils {
     scalerModel.transform(vectorData).drop("features").withColumnRenamed("scaledFeatures", "features")
   }
 
-  val getColor = udf((intValue: Int) => {
-    if (intValue == 0) "gray"
-    else if (intValue == 1) "lightcoral"
-    else if (intValue == 2) "tan"
-    else if (intValue == 3) "g"
-    else if (intValue == 4) "c"
-    else if (intValue == 5) "m"
-    else if (intValue == 6) "plum"
-    else if (intValue == 7) "b"
-    else if (intValue == 8) "lightblue"
-    else if (intValue == 9) "steelblue"
-    else if (intValue == 10) "turquoise"
-    else if (intValue == 11) "pink"
-    else if (intValue == 12) "silver"
-    else if (intValue == 13) "mediumseagreen"
-    else if (intValue == 14) "y"
-    else "r"
+    val getColor = udf((intValue: Int) => {
+    val colors = "slateblue,sienna,deepskyblue,darkcyan,orchid,dimgray,lightgreen,thistle,firebrick,mediumaquamarine,silver,red,lightseagreen,yellow,darkred,seashell,olivedrab," +
+      "mediumvioletred,mistyrose,darkolivegreen,slategray,tomato,mediumorchid,darkgrey,chocolate,purple,navajowhite,darkorange,rosybrown,mediumseagreen,yellowgreen,fuchsia,darkblue,darkgoldenrod,palegreen,forestgreen," +
+      "aliceblue,greenyellow,darkkhaki,orangered,maroon,aquamarine,darkslateblue,deeppink,sage,paleturquoise,lawngreen,aqua,skyblue,peachpuff,beige,gainsboro,peru,brown,black,lightgrey,navy,plum,lemonchiffon,lightsage," +
+      "mediumturquoise,darkslategray,indianred,indigo,lightyellow,slategrey,turquoise,blanchedalmond,antiquewhite,lightblue,lightcyan,azure,grey,lightsteelblue,lightgoldenrodyellow,crimson,cyan,mintcream,lavender," +
+      "ghostwhite,palegoldenrod,cornsilk,darkgray,lightskyblue,dodgerblue,mediumslateblue,snow,limegreen,honeydew,goldenrod,blue,cadetblue,darksalmon,bisque,white,lavenderblush,wheat,mediumspringgreen,mediumblue," +
+      "palevioletred,lightcoral,whitesmoke,darksage,khaki,mediumpurple,orange,floralwhite,cornflowerblue,darkmagenta,pink,midnightblue,darkturquoise,lime,burlywood,sandybrown,olive,oldlace,darkseagreen,gray,coral," +
+      "darkgreen,linen,saddlebrown,lightpink,gold,hotpink,chartreuse,violet,blueviolet,royalblue,green,papayawhip,dimgrey,tan,darkviolet,springgreen,lightsalmon,steelblue,seagreen,darkorchid,lightgray,salmon,magenta," +
+      "moccasin,teal,darkslategrey,lightslategray,lightslategrey,ivory,powderblue"
+      
+      val colorsList = colors.split(",")
+    
+      colorsList(intValue)    
   })
 
   /**
