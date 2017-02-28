@@ -109,12 +109,11 @@ object IndexDB {
 
         var numClustersFinales = 0
         val distIntraClusters = for (cluster <- 0 to k - 1) yield {
-          val centroide = modelGMM._1.gaussians(cluster).mean
           val datosCluster = clusteredData.where("prediction =" + cluster)
           val numDatosCluster = datosCluster.count()
           if (numDatosCluster > 0) {
             numClustersFinales = numClustersFinales + 1
-            val distPuntosCentroide = datosCluster.map(x => Vectors.sqdist(centroide, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum
+            val distPuntosCentroide = datosCluster.map(x => x.getAs[Double]("MaxProb")).rdd.sum
             math.sqrt(distPuntosCentroide / numDatosCluster)
           } else 0.0
         }

@@ -64,8 +64,7 @@ object IndexHartigan {
           val numObjetosCluster = clusterData.count()
           if (numObjetosCluster > 0) {
             numClustersFinales = numClustersFinales + 1
-            val centroide = modelGMM._1.gaussians(cluster).mean
-            Wq = Wq + clusterData.map(x => Vectors.sqdist(centroide, x.getAs[org.apache.spark.ml.linalg.Vector]("features"))).rdd.sum
+            Wq = Wq + clusterData.map(x => x.getAs[Double]("MaxProb")).rdd.sum
           }
         }
         WqByKGMM += Tuple3(numClustersFinales, Wq, k)
