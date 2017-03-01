@@ -61,8 +61,6 @@ object ClusteringIndexes {
         val modelGMM = if (method != null && (method == METHOD_GMM || method == METHOD_ALL)) {
           val model = new GaussianMixture().setK(k).setMaxIter(maxIterations).fit(vectorData)
           val res = model.transform(vectorData).withColumn("MaxProb", getMax(col("probability"))).where("MaxProb >= " + minProbabilityGMM)
-          val numRealGrupos = res.select("prediction").distinct()
-          println(s"MODELO GMM CON k = $k TIENE SOLO $numRealGrupos GRUPOS REALES")
           (model, res.cache())
         } else null
 
@@ -105,7 +103,7 @@ object ClusteringIndexes {
 
           val modelGMM = if (k > 1 && method != null && (method == METHOD_GMM || method == METHOD_ALL)) {
             val model = new GaussianMixture().setK(k).setMaxIter(maxIterations).fit(vectorData)
-            val res = model.transform(vectorData).withColumn("GroupMaxProb", getMax(col("probability"))).where("GroupMaxProb >= " + minProbabilityGMM)
+            val res = model.transform(vectorData).withColumn("MaxProb", getMax(col("probability"))).where("MaxProb >= " + minProbabilityGMM)
             (model, res)
           } else null
 
