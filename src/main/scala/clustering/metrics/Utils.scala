@@ -10,6 +10,8 @@ import org.apache.spark.sql.functions.udf
 
 object Utils {
   
+  val getRelativeError = udf((value: Double, absoluteError: Double) => absoluteError / value)
+  
   def removeOutliers(vectorData: DataFrame, factor: Int): DataFrame = {
     vectorData.filter(x => {
       val data = x.getAs[org.apache.spark.ml.linalg.Vector]("features")

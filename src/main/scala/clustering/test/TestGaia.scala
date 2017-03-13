@@ -9,6 +9,7 @@ import clustering.metrics.ClusteringIndexes.getMax
 import clustering.metrics.Spark
 import clustering.metrics.Utils.standarize
 import clustering.metrics.Utils.removeOutliers
+import clustering.metrics.Utils.getRelativeError
 import org.apache.spark.ml.clustering.KMeans
 import clustering.metrics.indexes.IndexRand
 import org.apache.spark.ml.clustering.GaussianMixture
@@ -17,6 +18,8 @@ import org.apache.spark.sql.functions.col
 object TestGaia {
 
   def main(args: Array[String]) {
+    
+    val spark = Spark.spark
 
     Spark.conf.setAppName("Gaia-Clustering-Metrics")
       //.setMaster("local[*]")
@@ -25,7 +28,7 @@ object TestGaia {
       .set("spark.sql.warehouse.dir", "spark-warehouse")
 
     val numRepeticiones = 1
-    val maxIterations = 100
+    val maxIterations = 200
     val minProbabilityGMM = 0.75
 
     val index = ClusteringIndexes.INDEX_ALL
@@ -33,12 +36,14 @@ object TestGaia {
 
     val seqK = 5 to 100 by 1
 
-    val dsExp = Spark.spark.read.parquet("TGAS-Exp2")
-    val vectorData = new VectorAssembler().setInputCols(Array("X", "Y", "Z", "VTA", "VTD")).setOutputCol("features").transform(dsExp).select("tycho2_id", "features")
-    val scaledVectorData = removeOutliers(standarize(vectorData), 5)
+//    val dsExp = Spark.spark.read.parquet("TGAS-Exp2").withColumn("errorRelativeParallax", getRelativeError(col("parallax"), col("parallax_error"))).where("errorRelativeParallax < 0.20")
+//    val vectorData = new VectorAssembler().setInputCols(Array("X", "Y", "Z", "VTA", "VTD")).setOutputCol("features").transform(dsExp)
+//    val scaledVectorData = removeOutliers(standarize(vectorData), 5)
+    
+    val dsGrupo = standarize(spark.read.parquet("DS_GRUPO5").drop("prediction"))
 
     val tIni1 = new Date().getTime
-    val result1 = ClusteringIndexes.estimateNumberClusters(scaledVectorData, seqK.toList, index = index, method = method, repeticiones = numRepeticiones, minProbabilityGMM = minProbabilityGMM, maxIterations = maxIterations)
+    val result1 = ClusteringIndexes.estimateNumberClusters(dsGrupo, seqK.toList, index = index, method = method, repeticiones = numRepeticiones, minProbabilityGMM = minProbabilityGMM, maxIterations = maxIterations)
     println(result1.sortBy(x => x.points).reverse.mkString("\n"))
     
     val tFin1 = new Date().getTime
