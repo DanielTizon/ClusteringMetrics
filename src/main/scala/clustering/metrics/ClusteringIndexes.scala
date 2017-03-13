@@ -18,6 +18,7 @@ import clustering.metrics.indexes.IndexDB
 import clustering.metrics.indexes.IndexHartigan
 import clustering.metrics.indexes.IndexKL
 import clustering.metrics.indexes.IndexRatkowsky
+import clustering.metrics.indexes.IndexRand
 
 object ClusteringIndexes {
 
@@ -30,6 +31,7 @@ object ClusteringIndexes {
   val INDEX_HARTIGAN = "indexHartigan"
   val INDEX_RATKOWSKY = "indexRatkowsky"
   val INDEX_KL = "indexKL"
+  val INDEX_RAND = "indexRand"
   val INDEX_ALL = "all"
 
   val METHOD_KMEANS = "kmeans"
@@ -37,8 +39,8 @@ object ClusteringIndexes {
   val METHOD_GMM = "gmm"
   val METHOD_ALL = "all"
 
-  def estimateNumberClusters(vectorData: DataFrame, seqK: List[Int] = (2 to 15).toList, index: String = INDEX_ALL, method: String = METHOD_KMEANS,
-                             repeticiones: Int = 1, maxIterations: Int = 20, minProbabilityGMM: Double = 0.5): List[ResultIndex] = {
+  def estimateNumberClusters(vectorData: DataFrame, seqK: List[Int] = (2 to 15).toList, indexes: Seq[String] = Seq(INDEX_BALL), method: String = METHOD_KMEANS,
+                             repeticiones: Int = 1, maxIterations: Int = 20, minProbabilityGMM: Double = 0.5, evidencia: DataFrame = null): List[ResultIndex] = {
 
     vectorData.cache()
 
@@ -67,27 +69,31 @@ object ClusteringIndexes {
         TuplaModelos(k, modelKMeans, modelBisectingKMeans, modelGMM)
       }
 
-      if (index != null && (index == INDEX_BALL || index == INDEX_ALL)) {
+      if (indexes != null && indexes.contains(INDEX_BALL)) {
         resultadoFinal ++= IndexBall.calculate(tupleModels, vectorData)
       }
 
-      if (index != null && (index == INDEX_CH || index == INDEX_ALL)) {
+      if (indexes != null && indexes.contains(INDEX_CH)) {
         resultadoFinal ++= IndexCH.calculate(tupleModels, vectorData)
       }
 
-      if (index != null && (index == INDEX_DB || index == INDEX_ALL)) {
+      if (indexes != null && indexes.contains(INDEX_DB)) {
         resultadoFinal ++= IndexDB.calculate(tupleModels, vectorData)
       }
 
-      if (index != null && (index == INDEX_HARTIGAN || index == INDEX_ALL)) {
+      if (indexes != null && indexes.contains(INDEX_HARTIGAN)) {
         resultadoFinal ++= IndexHartigan.calculate(tupleModels, vectorData)
       }
 
-      if (index != null && (index == INDEX_RATKOWSKY || index == INDEX_ALL)) {
+      if (indexes != null && indexes.contains(INDEX_RATKOWSKY)) {
         resultadoFinal ++= IndexRatkowsky.calculate(tupleModels, vectorData)
       }
+      
+      if (indexes != null && indexes.contains(INDEX_RAND)) {
+        resultadoFinal ++= IndexRand.calculate(tupleModels, vectorData, evidencia)
+      }
 
-      if (index != null && (index == INDEX_KL || index == INDEX_ALL)) {
+      if (indexes != null && indexes.contains(INDEX_KL)) {
         val newSeqK = ((seqK.sortBy(x => x).head - 1) :: seqK) :+ (seqK.sortBy(x => x).last + 1)
 
         val newTupleModels = for (k <- List(newSeqK.head, newSeqK.last)) yield {

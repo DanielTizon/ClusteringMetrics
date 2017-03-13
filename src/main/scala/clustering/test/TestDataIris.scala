@@ -26,18 +26,20 @@ object TestDataIris {
       .withColumn("SepalWidth", col("SepalWidth").cast("Double"))
       .withColumn("PetalLength", col("PetalLength").cast("Double"))
       .withColumn("PetalWidth", col("PetalWidth").cast("Double"))
-      .withColumnRenamed("index", "id")
+      .withColumnRenamed("index", "ID")
 
-    val vectorData = new VectorAssembler().setInputCols(Array("SepalLength", "SepalWidth", "PetalLength", "PetalWidth")).setOutputCol("features").transform(ds).select("id", "features")
+    val vectorData = new VectorAssembler().setInputCols(Array("SepalLength", "SepalWidth", "PetalLength", "PetalWidth")).setOutputCol("features").transform(ds).select("ID", "features")
 
-    // EVALUACION INTERNA
     val numRepeticiones = 1
     val maxIterations = 20
     val method = ClusteringIndexes.METHOD_KMEANS
-    val index = ClusteringIndexes.INDEX_BALL
+    //val indexes = Seq(ClusteringIndexes.INDEX_CH, ClusteringIndexes.INDEX_DB, ClusteringIndexes.INDEX_HARTIGAN, ClusteringIndexes.INDEX_KL, ClusteringIndexes.INDEX_RATKOWSKY, ClusteringIndexes.INDEX_RAND)
+    val indexes = Seq(ClusteringIndexes.INDEX_RAND)
+    
+    val evidencia = ds.select("Specie", "ID").withColumnRenamed("Specie", "GRUPO")
 
     val tIni = new Date().getTime
-    val result = ClusteringIndexes.estimateNumberClusters(vectorData, (2 to 15).toList, index = index, method = method, repeticiones = numRepeticiones)
+    val result = ClusteringIndexes.estimateNumberClusters(vectorData, (2 to 15).toList, indexes = indexes, method = method, repeticiones = numRepeticiones, evidencia = evidencia)
     println(s"${result.sortBy(x => x.points).reverse.mkString("\n")}")
 
     val tFin = new Date().getTime
