@@ -19,6 +19,7 @@ import clustering.metrics.indexes.IndexHartigan
 import clustering.metrics.indexes.IndexKL
 import clustering.metrics.indexes.IndexRatkowsky
 import clustering.metrics.indexes.IndexRand
+import org.apache.spark.storage.StorageLevel
 
 object ClusteringIndexes {
 
@@ -42,7 +43,7 @@ object ClusteringIndexes {
   def estimateNumberClusters(vectorData: DataFrame, seqK: List[Int] = (2 to 15).toList, indexes: Seq[String] = Seq(INDEX_BALL), method: String = METHOD_KMEANS,
                              repeticiones: Int = 1, maxIterations: Int = 20, minProbabilityGMM: Double = 0.5, evidencia: DataFrame = null): List[ResultIndex] = {
 
-    vectorData.cache()
+    vectorData.persist(StorageLevel.MEMORY_AND_DISK)
 
     val resultadoFinal = ListBuffer[ResultIndex]()
 
@@ -52,22 +53,49 @@ object ClusteringIndexes {
         println(s"GENERANDO MODELOS PARA k = $k")
         val modelKMeans = if (method != null && (method == METHOD_KMEANS || method == METHOD_ALL)) {
           val model = new KMeans().setK(k).setMaxIter(maxIterations).fit(vectorData)
-          (model, model.transform(vectorData).cache())
+          (model, model.transform(vectorData).persist(StorageLevel.MEMORY_AND_DISK))
         } else null
 
         val modelBisectingKMeans = if (method != null && (method == METHOD_BISECTING_KMEANS || method == METHOD_ALL)) {
           val model = new BisectingKMeans().setK(k).setMaxIter(maxIterations).fit(vectorData)
-          (model, model.transform(vectorData).cache())
+          (model, model.transform(vectorData).persist(StorageLevel.MEMORY_AND_DISK))
         } else null
 
         val modelGMM = if (method != null && (method == METHOD_GMM || method == METHOD_ALL)) {
           val model = new GaussianMixture().setK(k).setMaxIter(maxIterations).fit(vectorData)
           val res = model.transform(vectorData).withColumn("MaxProb", getMax(col("probability"))).where("MaxProb >= " + minProbabilityGMM)
-          (model, res.cache())
+          (model, res.persist(StorageLevel.MEMORY_AND_DISK))
         } else null
 
         TuplaModelos(k, modelKMeans, modelBisectingKMeans, modelGMM)
       }
+      
+      
+      val newTupleModels = if (indexes != null && indexes.contains(INDEX_KL)) {
+        val newSeqK = ((seqK.sortBy(x => x).head - 1) :: seqK) :+ (seqK.sortBy(x => x).last + 1)
+
+        for (k <- List(newSeqK.head, newSeqK.last)) yield {
+          val modelKMeans = if (k > 1 && method != null && (method == METHOD_KMEANS || method == METHOD_ALL)) {
+            val model = new KMeans().setK(k).setMaxIter(maxIterations).fit(vectorData)
+            (model, model.transform(vectorData).persist(StorageLevel.MEMORY_AND_DISK))
+          } else null
+
+          val modelBisectingKMeans = if (k > 1 && method != null && (method == METHOD_BISECTING_KMEANS || method == METHOD_ALL)) {
+            val model = new BisectingKMeans().setK(k).setMaxIter(maxIterations).fit(vectorData)
+            (model, model.transform(vectorData).persist(StorageLevel.MEMORY_AND_DISK))
+          } else null
+
+          val modelGMM = if (k > 1 && method != null && (method == METHOD_GMM || method == METHOD_ALL)) {
+            val model = new GaussianMixture().setK(k).setMaxIter(maxIterations).fit(vectorData)
+            val res = model.transform(vectorData).withColumn("MaxProb", getMax(col("probability"))).where("MaxProb >= " + minProbabilityGMM)
+            (model, res.persist(StorageLevel.MEMORY_AND_DISK))
+          } else null
+
+          TuplaModelos(k, modelKMeans, modelBisectingKMeans, modelGMM)
+        }
+      } else null
+      
+      
 
       if (indexes != null && indexes.contains(INDEX_BALL)) {
         resultadoFinal ++= IndexBall.calculate(tupleModels, vectorData)
@@ -94,28 +122,6 @@ object ClusteringIndexes {
       }
 
       if (indexes != null && indexes.contains(INDEX_KL)) {
-        val newSeqK = ((seqK.sortBy(x => x).head - 1) :: seqK) :+ (seqK.sortBy(x => x).last + 1)
-
-        val newTupleModels = for (k <- List(newSeqK.head, newSeqK.last)) yield {
-          val modelKMeans = if (k > 1 && method != null && (method == METHOD_KMEANS || method == METHOD_ALL)) {
-            val model = new KMeans().setK(k).setMaxIter(maxIterations).fit(vectorData)
-            (model, model.transform(vectorData))
-          } else null
-
-          val modelBisectingKMeans = if (k > 1 && method != null && (method == METHOD_BISECTING_KMEANS || method == METHOD_ALL)) {
-            val model = new BisectingKMeans().setK(k).setMaxIter(maxIterations).fit(vectorData)
-            (model, model.transform(vectorData))
-          } else null
-
-          val modelGMM = if (k > 1 && method != null && (method == METHOD_GMM || method == METHOD_ALL)) {
-            val model = new GaussianMixture().setK(k).setMaxIter(maxIterations).fit(vectorData)
-            val res = model.transform(vectorData).withColumn("MaxProb", getMax(col("probability"))).where("MaxProb >= " + minProbabilityGMM)
-            (model, res)
-          } else null
-
-          TuplaModelos(k, modelKMeans, modelBisectingKMeans, modelGMM)
-        }
-
         resultadoFinal ++= IndexKL.calculate(tupleModels ::: newTupleModels, vectorData)
       }
     }

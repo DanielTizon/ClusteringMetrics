@@ -33,10 +33,9 @@ object TestDataIris {
     val numRepeticiones = 1
     val maxIterations = 20
     val method = ClusteringIndexes.METHOD_KMEANS
-    //val indexes = Seq(ClusteringIndexes.INDEX_CH, ClusteringIndexes.INDEX_DB, ClusteringIndexes.INDEX_HARTIGAN, ClusteringIndexes.INDEX_KL, ClusteringIndexes.INDEX_RATKOWSKY, ClusteringIndexes.INDEX_RAND)
     val indexes = Seq(ClusteringIndexes.INDEX_RAND)
     
-    val evidencia = ds.select("Specie", "ID").withColumnRenamed("Specie", "GRUPO")
+    val evidencia = Spark.spark.read.option("header", true).csv("validacion_externa_iris.csv")
 
     val tIni = new Date().getTime
     val result = ClusteringIndexes.estimateNumberClusters(vectorData, (2 to 15).toList, indexes = indexes, method = method, repeticiones = numRepeticiones, evidencia = evidencia)
@@ -45,13 +44,6 @@ object TestDataIris {
     val tFin = new Date().getTime
     val tEmpleado = (tFin - tIni) / 1000.0
     println(s"\nEl proceso ha finalizado en $tEmpleado segundos")
-
-    // EVALUACION EXTERNA - RAND INDEX
-    //    val evidencia = Spark.spark.read.option("header", true).csv("Validacion Externa Iris.csv")
-    //    val res = new GaussianMixture().setK(3).fit(vectorData).transform(vectorData)
-    //    res.show
-    //    val randIndex = IndexRand.calculate(res, evidencia)
-    //    println("Rand Index: " + randIndex)
 
     Spark.spark.stop()
   }
