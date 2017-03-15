@@ -118,7 +118,7 @@ object ClusteringIndexes {
       }
       
       if (indexes != null && indexes.contains(INDEX_RAND)) {
-        resultadoFinal ++= IndexRand.calculate(tupleModels, vectorData, evidencia)
+        resultadoFinal ++= IndexRand.calculate(tupleModels, evidencia)
       }
 
       if (indexes != null && indexes.contains(INDEX_KL)) {
