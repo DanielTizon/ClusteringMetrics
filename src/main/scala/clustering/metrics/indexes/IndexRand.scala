@@ -26,12 +26,12 @@ object IndexRand {
    *  								                                 												 *
    * ***************************************************************************
    */
-  def calculate(modelTuples: List[TuplaModelos], vectorData: DataFrame, evidencia: DataFrame) = {
-    
+  def calculate(modelTuples: List[TuplaModelos], evidencia: DataFrame) = {
+
     import Spark.spark.implicits._
 
-    println(s"RAND INDEX -> ${modelTuples.map(_.k)}")    
-    
+    println(s"RAND INDEX -> ${modelTuples.map(_.k)}")
+
     val randIndexesKMeans: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
     val randIndexesBisectingKMeans: ListBuffer[Tuple2[Int, Double]] = ListBuffer[Tuple2[Int, Double]]()
     val randIndexesGMM: ListBuffer[Tuple3[Int, Double, Int]] = ListBuffer[Tuple3[Int, Double, Int]]()
@@ -48,123 +48,144 @@ object IndexRand {
 
         val result = modelKMeans._2.select("ID", "prediction")
 
-        val evidenciaRDD = evidencia.filter("ID is not null and GRUPO is not null").rdd.map(x => (x.getAs[String]("GRUPO"), x.getAs[String]("ID")))
-        val evidenciaAgrupados: RDD[Tuple3[Long, String, String]] = evidenciaRDD.groupByKey.flatMap(x => x._2.toSet.subsets(2)).map(x => (x.head, x.last)).zipWithIndex().map(x => (x._2, x._1._1, x._1._2))
-        val evidenciaSeparados: RDD[Tuple3[Long, String, String]] = evidenciaRDD.cartesian(evidenciaRDD).filter(x => x._1._1 != x._2._1).map(x => (x._1._2, x._2._2)).zipWithIndex().map(x => (x._2, x._1._1, x._1._2))
+        val numCoincidencias = result.join(evidencia, "ID").count()
 
-        var truePositives = 0L
-        var falseNegatives = 0L
+        if (numCoincidencias > 0) {
 
-        var falsePositives = 0L
-        var trueNegatives = 0L
+          val evidenciaRDD = evidencia.filter("ID is not null and GRUPO is not null").rdd.map(x => (x.getAs[String]("GRUPO"), x.getAs[String]("ID")))
+          val evidenciaAgrupados: RDD[Tuple3[Long, String, String]] = evidenciaRDD.groupByKey.flatMap(x => x._2.toSet.subsets(2)).map(x => (x.head, x.last)).zipWithIndex().map(x => (x._2, x._1._1, x._1._2))
+          val evidenciaSeparados: RDD[Tuple3[Long, String, String]] = evidenciaRDD.cartesian(evidenciaRDD).filter(x => x._1._1 != x._2._1).map(x => (x._1._2, x._2._2)).zipWithIndex().map(x => (x._2, x._1._1, x._1._2))
 
-        if (!evidenciaAgrupados.take(1).isEmpty) {
+          var truePositives = 0L
+          var falseNegatives = 0L
 
-          val dfEvidenciaAgrupadosTotal = evidenciaAgrupados.toDF("ID_GROUP", "ID1", "ID2")
-          val dfEvidenciaAgrupados1 = dfEvidenciaAgrupadosTotal.join(result, dfEvidenciaAgrupadosTotal("ID1") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_1")
-          val dfEvidenciaAgrupados2 = dfEvidenciaAgrupadosTotal.join(result, dfEvidenciaAgrupadosTotal("ID2") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_2")
-          val joinedAgrupados = dfEvidenciaAgrupados1.join(dfEvidenciaAgrupados2, "ID_GROUP")
+          var falsePositives = 0L
+          var trueNegatives = 0L
 
-          truePositives = joinedAgrupados.where("prediction_1 = prediction_2").count()
-          falseNegatives = joinedAgrupados.where("prediction_1 != prediction_2").count()
+          if (!evidenciaAgrupados.take(1).isEmpty) {
+
+            val dfEvidenciaAgrupadosTotal = evidenciaAgrupados.toDF("ID_GROUP", "ID1", "ID2")
+            val dfEvidenciaAgrupados1 = dfEvidenciaAgrupadosTotal.join(result, dfEvidenciaAgrupadosTotal("ID1") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_1")
+            val dfEvidenciaAgrupados2 = dfEvidenciaAgrupadosTotal.join(result, dfEvidenciaAgrupadosTotal("ID2") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_2")
+            val joinedAgrupados = dfEvidenciaAgrupados1.join(dfEvidenciaAgrupados2, "ID_GROUP")
+
+            truePositives = joinedAgrupados.where("prediction_1 = prediction_2").count()
+            falseNegatives = joinedAgrupados.where("prediction_1 != prediction_2").count()
+          }
+
+          if (!evidenciaSeparados.take(1).isEmpty) {
+
+            val dfEvidenciaSeparadosTotal = evidenciaSeparados.toDF("ID_GROUP", "ID1", "ID2")
+            val dfEvidenciaSeparados1 = dfEvidenciaSeparadosTotal.join(result, dfEvidenciaSeparadosTotal("ID1") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_1")
+            val dfEvidenciaSeparados2 = dfEvidenciaSeparadosTotal.join(result, dfEvidenciaSeparadosTotal("ID2") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_2")
+            val joinedSeparados = dfEvidenciaSeparados1.join(dfEvidenciaSeparados2, "ID_GROUP")
+
+            falsePositives = joinedSeparados.where("prediction_1 = prediction_2").count()
+            trueNegatives = joinedSeparados.where("prediction_1 != prediction_2").count()
+          }
+
+          val randIndex = (truePositives + trueNegatives) / (truePositives + trueNegatives + falsePositives + falseNegatives).toDouble
+
+          randIndexesKMeans += Tuple2(k, randIndex)
+        } else {
+          print("En el Dataframe de Evidencias no existe ningún elemento del Dataset")
         }
-
-        if (!evidenciaSeparados.take(1).isEmpty) {
-
-          val dfEvidenciaSeparadosTotal = evidenciaSeparados.toDF("ID_GROUP", "ID1", "ID2")
-          val dfEvidenciaSeparados1 = dfEvidenciaSeparadosTotal.join(result, dfEvidenciaSeparadosTotal("ID1") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_1")
-          val dfEvidenciaSeparados2 = dfEvidenciaSeparadosTotal.join(result, dfEvidenciaSeparadosTotal("ID2") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_2")
-          val joinedSeparados = dfEvidenciaSeparados1.join(dfEvidenciaSeparados2, "ID_GROUP")
-
-          falsePositives = joinedSeparados.where("prediction_1 = prediction_2").count()
-          trueNegatives = joinedSeparados.where("prediction_1 != prediction_2").count()
-        }
-
-        val randIndex = (truePositives + trueNegatives) / (truePositives + trueNegatives + falsePositives + falseNegatives).toDouble
-
-        randIndexesKMeans += Tuple2(k, randIndex)
       }
 
       // BISECTING KMEANS
       if (modelBisectingKMeans != null) {
         val result = modelBisectingKMeans._2.select("ID", "prediction")
 
-        val evidenciaRDD = evidencia.filter("ID is not null and GRUPO is not null").rdd.map(x => (x.getAs[String]("GRUPO"), x.getAs[String]("ID")))
-        val evidenciaAgrupados: RDD[Tuple3[Long, String, String]] = evidenciaRDD.groupByKey.flatMap(x => x._2.toSet.subsets(2)).map(x => (x.head, x.last)).zipWithIndex().map(x => (x._2, x._1._1, x._1._2))
-        val evidenciaSeparados: RDD[Tuple3[Long, String, String]] = evidenciaRDD.cartesian(evidenciaRDD).filter(x => x._1._1 != x._2._1).map(x => (x._1._2, x._2._2)).zipWithIndex().map(x => (x._2, x._1._1, x._1._2))
+        val numCoincidencias = result.join(evidencia, "ID").count()
 
-        var truePositives = 0L
-        var falseNegatives = 0L
+        if (numCoincidencias > 0) {
 
-        var falsePositives = 0L
-        var trueNegatives = 0L
+          val evidenciaRDD = evidencia.filter("ID is not null and GRUPO is not null").rdd.map(x => (x.getAs[String]("GRUPO"), x.getAs[String]("ID")))
+          val evidenciaAgrupados: RDD[Tuple3[Long, String, String]] = evidenciaRDD.groupByKey.flatMap(x => x._2.toSet.subsets(2)).map(x => (x.head, x.last)).zipWithIndex().map(x => (x._2, x._1._1, x._1._2))
+          val evidenciaSeparados: RDD[Tuple3[Long, String, String]] = evidenciaRDD.cartesian(evidenciaRDD).filter(x => x._1._1 != x._2._1).map(x => (x._1._2, x._2._2)).zipWithIndex().map(x => (x._2, x._1._1, x._1._2))
 
-        if (!evidenciaAgrupados.take(1).isEmpty) {
+          var truePositives = 0L
+          var falseNegatives = 0L
 
-          val dfEvidenciaAgrupadosTotal = evidenciaAgrupados.toDF("ID_GROUP", "ID1", "ID2")
-          val dfEvidenciaAgrupados1 = dfEvidenciaAgrupadosTotal.join(result, dfEvidenciaAgrupadosTotal("ID1") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_1")
-          val dfEvidenciaAgrupados2 = dfEvidenciaAgrupadosTotal.join(result, dfEvidenciaAgrupadosTotal("ID2") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_2")
-          val joinedAgrupados = dfEvidenciaAgrupados1.join(dfEvidenciaAgrupados2, "ID_GROUP")
+          var falsePositives = 0L
+          var trueNegatives = 0L
 
-          truePositives = joinedAgrupados.where("prediction_1 = prediction_2").count()
-          falseNegatives = joinedAgrupados.where("prediction_1 != prediction_2").count()
+          if (!evidenciaAgrupados.take(1).isEmpty) {
+
+            val dfEvidenciaAgrupadosTotal = evidenciaAgrupados.toDF("ID_GROUP", "ID1", "ID2")
+            val dfEvidenciaAgrupados1 = dfEvidenciaAgrupadosTotal.join(result, dfEvidenciaAgrupadosTotal("ID1") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_1")
+            val dfEvidenciaAgrupados2 = dfEvidenciaAgrupadosTotal.join(result, dfEvidenciaAgrupadosTotal("ID2") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_2")
+            val joinedAgrupados = dfEvidenciaAgrupados1.join(dfEvidenciaAgrupados2, "ID_GROUP")
+
+            truePositives = joinedAgrupados.where("prediction_1 = prediction_2").count()
+            falseNegatives = joinedAgrupados.where("prediction_1 != prediction_2").count()
+          }
+
+          if (!evidenciaSeparados.take(1).isEmpty) {
+
+            val dfEvidenciaSeparadosTotal = evidenciaSeparados.toDF("ID_GROUP", "ID1", "ID2")
+            val dfEvidenciaSeparados1 = dfEvidenciaSeparadosTotal.join(result, dfEvidenciaSeparadosTotal("ID1") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_1")
+            val dfEvidenciaSeparados2 = dfEvidenciaSeparadosTotal.join(result, dfEvidenciaSeparadosTotal("ID2") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_2")
+            val joinedSeparados = dfEvidenciaSeparados1.join(dfEvidenciaSeparados2, "ID_GROUP")
+
+            falsePositives = joinedSeparados.where("prediction_1 = prediction_2").count()
+            trueNegatives = joinedSeparados.where("prediction_1 != prediction_2").count()
+          }
+
+          val randIndex = (truePositives + trueNegatives) / (truePositives + trueNegatives + falsePositives + falseNegatives).toDouble
+
+          randIndexesBisectingKMeans += Tuple2(k, randIndex)
+        } else {
+          print("En el Dataframe de Evidencias no existe ningún elemento del Dataset")
         }
-
-        if (!evidenciaSeparados.take(1).isEmpty) {
-
-          val dfEvidenciaSeparadosTotal = evidenciaSeparados.toDF("ID_GROUP", "ID1", "ID2")
-          val dfEvidenciaSeparados1 = dfEvidenciaSeparadosTotal.join(result, dfEvidenciaSeparadosTotal("ID1") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_1")
-          val dfEvidenciaSeparados2 = dfEvidenciaSeparadosTotal.join(result, dfEvidenciaSeparadosTotal("ID2") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_2")
-          val joinedSeparados = dfEvidenciaSeparados1.join(dfEvidenciaSeparados2, "ID_GROUP")
-
-          falsePositives = joinedSeparados.where("prediction_1 = prediction_2").count()
-          trueNegatives = joinedSeparados.where("prediction_1 != prediction_2").count()
-        }
-
-        val randIndex = (truePositives + trueNegatives) / (truePositives + trueNegatives + falsePositives + falseNegatives).toDouble
-
-        randIndexesBisectingKMeans += Tuple2(k, randIndex)
       }
 
       // MEZCLAS GAUSSIANAS
       if (modelGMM != null) {
-         val result = modelGMM._2.select("ID", "prediction")
+        val result = modelGMM._2.select("ID", "prediction")
 
-        val evidenciaRDD = evidencia.filter("ID is not null and GRUPO is not null").rdd.map(x => (x.getAs[String]("GRUPO"), x.getAs[String]("ID")))
-        val evidenciaAgrupados: RDD[Tuple3[Long, String, String]] = evidenciaRDD.groupByKey.flatMap(x => x._2.toSet.subsets(2)).map(x => (x.head, x.last)).zipWithIndex().map(x => (x._2, x._1._1, x._1._2))
-        val evidenciaSeparados: RDD[Tuple3[Long, String, String]] = evidenciaRDD.cartesian(evidenciaRDD).filter(x => x._1._1 != x._2._1).map(x => (x._1._2, x._2._2)).zipWithIndex().map(x => (x._2, x._1._1, x._1._2))
+        val numCoincidencias = result.join(evidencia, "ID").count()
 
-        var truePositives = 0L
-        var falseNegatives = 0L
+        if (numCoincidencias > 0) {
 
-        var falsePositives = 0L
-        var trueNegatives = 0L
+          val evidenciaRDD = evidencia.filter("ID is not null and GRUPO is not null").rdd.map(x => (x.getAs[String]("GRUPO"), x.getAs[String]("ID")))
+          val evidenciaAgrupados: RDD[Tuple3[Long, String, String]] = evidenciaRDD.groupByKey.flatMap(x => x._2.toSet.subsets(2)).map(x => (x.head, x.last)).zipWithIndex().map(x => (x._2, x._1._1, x._1._2))
+          val evidenciaSeparados: RDD[Tuple3[Long, String, String]] = evidenciaRDD.cartesian(evidenciaRDD).filter(x => x._1._1 != x._2._1).map(x => (x._1._2, x._2._2)).zipWithIndex().map(x => (x._2, x._1._1, x._1._2))
 
-        if (!evidenciaAgrupados.take(1).isEmpty) {
+          var truePositives = 0L
+          var falseNegatives = 0L
 
-          val dfEvidenciaAgrupadosTotal = evidenciaAgrupados.toDF("ID_GROUP", "ID1", "ID2")
-          val dfEvidenciaAgrupados1 = dfEvidenciaAgrupadosTotal.join(result, dfEvidenciaAgrupadosTotal("ID1") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_1")
-          val dfEvidenciaAgrupados2 = dfEvidenciaAgrupadosTotal.join(result, dfEvidenciaAgrupadosTotal("ID2") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_2")
-          val joinedAgrupados = dfEvidenciaAgrupados1.join(dfEvidenciaAgrupados2, "ID_GROUP")
+          var falsePositives = 0L
+          var trueNegatives = 0L
 
-          truePositives = joinedAgrupados.where("prediction_1 = prediction_2").count()
-          falseNegatives = joinedAgrupados.where("prediction_1 != prediction_2").count()
+          if (!evidenciaAgrupados.take(1).isEmpty) {
+
+            val dfEvidenciaAgrupadosTotal = evidenciaAgrupados.toDF("ID_GROUP", "ID1", "ID2")
+            val dfEvidenciaAgrupados1 = dfEvidenciaAgrupadosTotal.join(result, dfEvidenciaAgrupadosTotal("ID1") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_1")
+            val dfEvidenciaAgrupados2 = dfEvidenciaAgrupadosTotal.join(result, dfEvidenciaAgrupadosTotal("ID2") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_2")
+            val joinedAgrupados = dfEvidenciaAgrupados1.join(dfEvidenciaAgrupados2, "ID_GROUP")
+
+            truePositives = joinedAgrupados.where("prediction_1 = prediction_2").count()
+            falseNegatives = joinedAgrupados.where("prediction_1 != prediction_2").count()
+          }
+
+          if (!evidenciaSeparados.take(1).isEmpty) {
+
+            val dfEvidenciaSeparadosTotal = evidenciaSeparados.toDF("ID_GROUP", "ID1", "ID2")
+            val dfEvidenciaSeparados1 = dfEvidenciaSeparadosTotal.join(result, dfEvidenciaSeparadosTotal("ID1") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_1")
+            val dfEvidenciaSeparados2 = dfEvidenciaSeparadosTotal.join(result, dfEvidenciaSeparadosTotal("ID2") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_2")
+            val joinedSeparados = dfEvidenciaSeparados1.join(dfEvidenciaSeparados2, "ID_GROUP")
+
+            falsePositives = joinedSeparados.where("prediction_1 = prediction_2").count()
+            trueNegatives = joinedSeparados.where("prediction_1 != prediction_2").count()
+          }
+
+          val randIndex = (truePositives + trueNegatives) / (truePositives + trueNegatives + falsePositives + falseNegatives).toDouble
+
+          randIndexesGMM += Tuple3(k, randIndex, result.select("prediction").distinct.count.toInt)
+        } else {
+          print("En el Dataframe de Evidencias no existe ningún elemento del Dataset")
         }
-
-        if (!evidenciaSeparados.take(1).isEmpty) {
-
-          val dfEvidenciaSeparadosTotal = evidenciaSeparados.toDF("ID_GROUP", "ID1", "ID2")
-          val dfEvidenciaSeparados1 = dfEvidenciaSeparadosTotal.join(result, dfEvidenciaSeparadosTotal("ID1") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_1")
-          val dfEvidenciaSeparados2 = dfEvidenciaSeparadosTotal.join(result, dfEvidenciaSeparadosTotal("ID2") === result("ID")).select("ID_GROUP", "prediction").withColumnRenamed("prediction", "prediction_2")
-          val joinedSeparados = dfEvidenciaSeparados1.join(dfEvidenciaSeparados2, "ID_GROUP")
-
-          falsePositives = joinedSeparados.where("prediction_1 = prediction_2").count()
-          trueNegatives = joinedSeparados.where("prediction_1 != prediction_2").count()
-        }
-
-        val randIndex = (truePositives + trueNegatives) / (truePositives + trueNegatives + falsePositives + falseNegatives).toDouble
-
-        randIndexesGMM += Tuple3(k, randIndex, result.select("prediction").distinct.count.toInt)
       }
     }
 
