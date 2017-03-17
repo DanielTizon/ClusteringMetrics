@@ -15,30 +15,29 @@ object TestDataIris {
 
   def main(args: Array[String]) {
 
+    import Spark.spark.implicits._
+
     Spark.conf.setAppName("Test Data Iris")
       .setMaster("local[*]")
       .set("spark.sql.warehouse.dir", "spark-warehouse")
 
-    val rutaCSV = "iris.csv"
+    val numRepeticiones = 1
+    val maxIterations = 20
+    val method = ClusteringIndexes.METHOD_GMM
+    val indexes = Seq(ClusteringIndexes.INDEX_RAND)
 
-    val ds = Spark.spark.read.option("delimiter", ",").option("header", "true").csv(rutaCSV)
-      .withColumn("SepalLength", col("SepalLength").cast("Double"))
-      .withColumn("SepalWidth", col("SepalWidth").cast("Double"))
-      .withColumn("PetalLength", col("PetalLength").cast("Double"))
-      .withColumn("PetalWidth", col("PetalWidth").cast("Double"))
+    val seqK = 2 to 15 by 1
+
+    val ds = Spark.spark.read.option("delimiter", ",").option("header", "true").csv("iris.csv").withColumn("SepalLength", 'SepalLength.cast("Double"))
+      .withColumn("SepalWidth", 'SepalWidth.cast("Double")).withColumn("PetalLength", 'PetalLength.cast("Double")).withColumn("PetalWidth", 'PetalWidth.cast("Double"))
       .withColumnRenamed("index", "ID")
 
     val vectorData = new VectorAssembler().setInputCols(Array("SepalLength", "SepalWidth", "PetalLength", "PetalWidth")).setOutputCol("features").transform(ds).select("ID", "features")
 
-    val numRepeticiones = 1
-    val maxIterations = 20
-    val method = ClusteringIndexes.METHOD_KMEANS
-    val indexes = Seq(ClusteringIndexes.INDEX_RAND)
-    
     val evidencia = Spark.spark.read.option("header", true).csv("validacion_externa_iris.csv")
 
     val tIni = new Date().getTime
-    val result = ClusteringIndexes.estimateNumberClusters(vectorData, (2 to 15).toList, indexes = indexes, method = method, repeticiones = numRepeticiones, evidencia = evidencia)
+    val result = ClusteringIndexes.estimateNumberClusters(vectorData, seqK.toList, indexes = indexes, method = method, repeticiones = numRepeticiones, evidencia = evidencia)
     println(s"${result.sortBy(x => x.points).reverse.mkString("\n")}")
 
     val tFin = new Date().getTime

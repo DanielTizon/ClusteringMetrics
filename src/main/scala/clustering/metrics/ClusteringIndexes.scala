@@ -43,6 +43,7 @@ object ClusteringIndexes {
   def estimateNumberClusters(vectorData: DataFrame, seqK: List[Int] = (2 to 15).toList, indexes: Seq[String] = Seq(INDEX_BALL), method: String = METHOD_KMEANS,
                              repeticiones: Int = 1, maxIterations: Int = 20, minProbabilityGMM: Double = 0.5, evidencia: DataFrame = null): List[ResultIndex] = {
 
+    import Spark.spark.implicits._
     vectorData.persist(StorageLevel.MEMORY_AND_DISK)
 
     val resultadoFinal = ListBuffer[ResultIndex]()
@@ -63,7 +64,7 @@ object ClusteringIndexes {
 
         val modelGMM = if (method != null && (method == METHOD_GMM || method == METHOD_ALL)) {
           val model = new GaussianMixture().setK(k).setMaxIter(maxIterations).fit(vectorData)
-          val res = model.transform(vectorData).withColumn("MaxProb", getMax(col("probability"))).where("MaxProb >= " + minProbabilityGMM)
+          val res = model.transform(vectorData).withColumn("MaxProb", getMax('probability)).where("MaxProb >= " + minProbabilityGMM)
           (model, res.persist(StorageLevel.MEMORY_AND_DISK))
         } else null
 
@@ -87,7 +88,7 @@ object ClusteringIndexes {
 
           val modelGMM = if (k > 1 && method != null && (method == METHOD_GMM || method == METHOD_ALL)) {
             val model = new GaussianMixture().setK(k).setMaxIter(maxIterations).fit(vectorData)
-            val res = model.transform(vectorData).withColumn("MaxProb", getMax(col("probability"))).where("MaxProb >= " + minProbabilityGMM)
+            val res = model.transform(vectorData).withColumn("MaxProb", getMax('probability)).where("MaxProb >= " + minProbabilityGMM)
             (model, res.persist(StorageLevel.MEMORY_AND_DISK))
           } else null
 
