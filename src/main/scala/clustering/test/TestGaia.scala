@@ -32,15 +32,15 @@ object TestGaia {
     val minProbabilityGMM = 0.75
 
     val indexes = Seq(ClusteringIndexes.INDEX_BALL, ClusteringIndexes.INDEX_CH, ClusteringIndexes.INDEX_DB, ClusteringIndexes.INDEX_HARTIGAN,
-      ClusteringIndexes.INDEX_KL, ClusteringIndexes.INDEX_RATKOWSKY, ClusteringIndexes.INDEX_RAND)
+      ClusteringIndexes.INDEX_KL, ClusteringIndexes.INDEX_RATKOWSKY)
 
     val method = ClusteringIndexes.METHOD_GMM
 
-    val seqK = 5 to 100 by 1
+    val seqK = 2 to 100 by 1
 
     val evidencia = Spark.spark.read.option("header", true).csv("validacion_externa_tgas.csv")
     
-    val dsGrupo = standarize(spark.read.parquet("DS_GRUPO5").drop("prediction")).withColumnRenamed("tycho2", "ID")
+    val dsGrupo = standarize(spark.read.parquet("DS_GRUPO4").drop("prediction")).withColumnRenamed("tycho2", "ID")
 
     //    val dsExp = Spark.spark.read.parquet("TGAS-Exp2").withColumn("errorRelativeParallax", getRelativeError(col("parallax"), col("parallax_error"))).where("errorRelativeParallax < 0.20")
     //    val vectorData = new VectorAssembler().setInputCols(Array("X", "Y", "Z", "VTA", "VTD")).setOutputCol("features").transform(dsExp)

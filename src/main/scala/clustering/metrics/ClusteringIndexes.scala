@@ -69,8 +69,7 @@ object ClusteringIndexes {
 
         TuplaModelos(k, modelKMeans, modelBisectingKMeans, modelGMM)
       }
-      
-      
+
       val newTupleModels = if (indexes != null && indexes.contains(INDEX_KL)) {
         val newSeqK = ((seqK.sortBy(x => x).head - 1) :: seqK) :+ (seqK.sortBy(x => x).last + 1)
 
@@ -94,35 +93,47 @@ object ClusteringIndexes {
           TuplaModelos(k, modelKMeans, modelBisectingKMeans, modelGMM)
         }
       } else null
-      
-      
 
       if (indexes != null && indexes.contains(INDEX_BALL)) {
-        resultadoFinal ++= IndexBall.calculate(tupleModels, vectorData)
+        val ballIndexResults = IndexBall.calculate(tupleModels, vectorData)
+        ballIndexResults.foreach(println)
+        resultadoFinal ++= ballIndexResults
       }
 
       if (indexes != null && indexes.contains(INDEX_CH)) {
-        resultadoFinal ++= IndexCH.calculate(tupleModels, vectorData)
+        val chIndexResults = IndexCH.calculate(tupleModels, vectorData)
+        chIndexResults.foreach(println)
+        resultadoFinal ++= chIndexResults
       }
 
       if (indexes != null && indexes.contains(INDEX_DB)) {
-        resultadoFinal ++= IndexDB.calculate(tupleModels, vectorData)
+        val dbIndexResults = IndexDB.calculate(tupleModels, vectorData)
+        dbIndexResults.foreach(println)
+        resultadoFinal ++= dbIndexResults
       }
 
       if (indexes != null && indexes.contains(INDEX_HARTIGAN)) {
-        resultadoFinal ++= IndexHartigan.calculate(tupleModels, vectorData)
+        val hartiganIndexResults = IndexHartigan.calculate(tupleModels, vectorData)
+        hartiganIndexResults.foreach(println)
+        resultadoFinal ++= hartiganIndexResults
       }
 
       if (indexes != null && indexes.contains(INDEX_RATKOWSKY)) {
-        resultadoFinal ++= IndexRatkowsky.calculate(tupleModels, vectorData)
+        val ratkowskyIndexResults = IndexRatkowsky.calculate(tupleModels, vectorData)
+        ratkowskyIndexResults.foreach(println)
+        resultadoFinal ++= ratkowskyIndexResults
       }
-      
+
       if (indexes != null && indexes.contains(INDEX_RAND)) {
-        resultadoFinal ++= IndexRand.calculate(tupleModels, evidencia)
+        val randIndexResults = IndexRand.calculate(tupleModels, evidencia)
+        randIndexResults.foreach(println)
+        resultadoFinal ++= randIndexResults
       }
 
       if (indexes != null && indexes.contains(INDEX_KL)) {
-        resultadoFinal ++= IndexKL.calculate(tupleModels ::: newTupleModels, vectorData)
+        val klIndexResults = IndexKL.calculate(tupleModels ::: newTupleModels, vectorData)
+        klIndexResults.foreach(println)
+        resultadoFinal ++= klIndexResults
       }
     }
     resultadoFinal.toList
