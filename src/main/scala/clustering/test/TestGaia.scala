@@ -20,6 +20,8 @@ object TestGaia {
   def main(args: Array[String]) {
 
     val spark = Spark.spark
+    
+    import spark.implicits._
 
     Spark.conf.setAppName("Gaia-Clustering-Metrics")
       //.setMaster("local[*]")
@@ -40,16 +42,19 @@ object TestGaia {
 
     val evidencia = Spark.spark.read.option("header", true).csv("validacion_externa_tgas.csv")
     
-    val dsGrupo = standarize(spark.read.parquet("DS_GRUPO4").drop("prediction")).withColumnRenamed("tycho2", "ID")
+    val dsGrupo = spark.read.parquet("DS_GRUPO4").drop("prediction", "features", "color").withColumnRenamed("tycho2", "ID").withColumn("X", 'X.cast("Double")).withColumn("Y", 'Y.cast("Double"))
+    .withColumn("Z", 'Z.cast("Double")).withColumn("VTA", 'VTA.cast("Double")).withColumn("VTD", 'VTD.cast("Double"))
+    val vectorData = standarize(new VectorAssembler().setInputCols(Array("X", "Y", "Z", "VTA", "VTD")).setOutputCol("features").transform(dsGrupo))
 
     //    val dsExp = Spark.spark.read.parquet("TGAS-Exp2").withColumn("errorRelativeParallax", getRelativeError(col("parallax"), col("parallax_error"))).where("errorRelativeParallax < 0.20")
     //    val vectorData = new VectorAssembler().setInputCols(Array("X", "Y", "Z", "VTA", "VTD")).setOutputCol("features").transform(dsExp)
     //    val scaledVectorData = removeOutliers(standarize(vectorData), 5)
 
     val tIni1 = new Date().getTime
-    val result1 = ClusteringIndexes.estimateNumberClusters(dsGrupo, seqK.toList, indexes = indexes, method = method, repeticiones = numRepeticiones,
+    val result1 = ClusteringIndexes.estimateNumberClusters(vectorData, seqK.toList, indexes = indexes, method = method, repeticiones = numRepeticiones,
       minProbabilityGMM = minProbabilityGMM, maxIterations = maxIterations, evidencia = evidencia)
 
+    println("\n\nRESULTADOS FINALES ORDENADOS POR SCORING")
     println(result1.sortBy(x => x.points).reverse.mkString("\n"))
 
     val tFin1 = new Date().getTime
