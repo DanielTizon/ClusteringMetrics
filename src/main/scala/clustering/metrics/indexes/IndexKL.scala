@@ -41,40 +41,44 @@ object IndexKL {
 
     for (modelsK <- modelTuples if (modelsK.k > 1)) {
       val k = modelsK.k
-      println(s"CALCULANDO KL INDEX PARA k = $k")
-      val modelKMeans = modelsK.modelKMeans
-      val modelBisectingKMeans = modelsK.modelBisectingKMeans
-      val modelGMM = modelsK.modelGMM
 
-      // KMEANS
-      if (modelKMeans != null) {
-        // Wq = WSSSE (Within Set Sum of Squared Errors)
-        val Wq = modelKMeans._1.computeCost(vectorData)
-        WqByKKmeans += Tuple2(k, Wq)
-      }
+      // El indice KL solo puede emplearse para un k superior a 2, ya que este indice necesita tener el modelo para el k anterior
+      if (k > 2) {
+        println(s"CALCULANDO KL INDEX PARA k = $k")
+        val modelKMeans = modelsK.modelKMeans
+        val modelBisectingKMeans = modelsK.modelBisectingKMeans
+        val modelGMM = modelsK.modelGMM
 
-      // BISECTING KMEANS
-      if (modelBisectingKMeans != null) {
-        // Wq = WSSSE (Within Set Sum of Squared Errors)
-        val Wq = modelBisectingKMeans._1.computeCost(vectorData)
-        WqByKBisectingKmeans += Tuple2(k, Wq)
-      }
-
-      // MEZCLAS GAUSSIANAS
-      if (modelGMM != null) {
-        val clusteredData = modelGMM._2
-        var numClustersFinales = 0
-        var Wq = 0.0
-        for (cluster <- 0 to k - 1) {
-          val clusterData = clusteredData.where("prediction =" + cluster)
-          val numObjetosCluster = clusterData.count()
-          if (numObjetosCluster > 0) {
-            numClustersFinales = numClustersFinales + 1
-            val centroide = modelGMM._1.gaussians(cluster).mean
-            Wq = Wq + clusterData.map(x => x.getAs[Double]("MaxProb")).rdd.sum
-          }
+        // KMEANS
+        if (modelKMeans != null) {
+          // Wq = WSSSE (Within Set Sum of Squared Errors)
+          val Wq = modelKMeans._1.computeCost(vectorData)
+          WqByKKmeans += Tuple2(k, Wq)
         }
-        WqByKGMM += Tuple3(numClustersFinales, Wq, k)
+
+        // BISECTING KMEANS
+        if (modelBisectingKMeans != null) {
+          // Wq = WSSSE (Within Set Sum of Squared Errors)
+          val Wq = modelBisectingKMeans._1.computeCost(vectorData)
+          WqByKBisectingKmeans += Tuple2(k, Wq)
+        }
+
+        // MEZCLAS GAUSSIANAS
+        if (modelGMM != null) {
+          val clusteredData = modelGMM._2
+          var numClustersFinales = 0
+          var Wq = 0.0
+          for (cluster <- 0 to k - 1) {
+            val clusterData = clusteredData.where("prediction =" + cluster)
+            val numObjetosCluster = clusterData.count()
+            if (numObjetosCluster > 0) {
+              numClustersFinales = numClustersFinales + 1
+              val centroide = modelGMM._1.gaussians(cluster).mean
+              Wq = Wq + clusterData.map(x => x.getAs[Double]("MaxProb")).rdd.sum
+            }
+          }
+          WqByKGMM += Tuple3(numClustersFinales, Wq, k)
+        }
       }
     }
 
