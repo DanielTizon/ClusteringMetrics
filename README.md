@@ -1,4 +1,4 @@
-# ClusteringMetrics
+# Spark Clustering Metrics
 
 I have developed some important clustering evaluation indexes in Spark 2.1.0,
 using the Scala API. These indexes can help us to choose the best number of "k"

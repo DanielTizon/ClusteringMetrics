@@ -4,8 +4,8 @@
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>spark</groupId>
-	<artifactId>clustering-metrics</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<artifactId>spark-clustering-metrics</artifactId>
+	<version>0.0.2</version>
 	<name>clustering-metrics</name>
 	<packaging>jar</packaging>
 
