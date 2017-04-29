@@ -20,6 +20,10 @@ about any elements that must go in the same group or in different groups):
 
 * Rand Index (Rand Index) - 1971
 
+I have created a function that let you estimate what is the best "k" for your dataset, 
+you can see an example in clustering.test.TestDataIris (Iris dataset for testing is 
+included in the project).
+
 Any suggestion or fix will be appreciated.
 
 You can contact with me using my email: daniel.tizon@gmail.com
