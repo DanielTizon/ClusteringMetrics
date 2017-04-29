@@ -24,7 +24,7 @@ import org.apache.spark.storage.StorageLevel
 object ClusteringIndexes {
 
   case class TuplaModelos(k: Int, modelKMeans: (KMeansModel, DataFrame), modelBisectingKMeans: (BisectingKMeansModel, DataFrame), modelGMM: (GaussianMixtureModel, DataFrame))
-  case class ResultIndex(val method: String, val indexType: String, val numGruposFinal: Int, val indexValue: Double, val points: Int, val kInicial: Int)
+  case class ResultIndex(val method: String, val indexType: String, val indexValue: Double, val points: Int, val kInicial: Int, val numGruposFinal: Int)
 
   val INDEX_BALL = "indexBall"
   val INDEX_CH = "indexCH"
@@ -70,10 +70,18 @@ object ClusteringIndexes {
 
         TuplaModelos(k, modelKMeans, modelBisectingKMeans, modelGMM)
       }
-      
-      
-      val newTupleModels = if (indexes != null && indexes.contains(INDEX_KL)) {
-        val newSeqK = ((seqK.sortBy(x => x).head - 1) :: seqK) :+ (seqK.sortBy(x => x).last + 1)
+
+      val newTupleModels = if (indexes != null && (indexes.contains(INDEX_KL) || indexes.contains(INDEX_ALL))) {
+        val newSeqK = {
+          val orderedK = seqK.sortBy(x => x)
+          val minK = orderedK.head
+          val maxK = orderedK.last
+          if (minK > 2) {
+            ((minK - 1) :: seqK) :+ (maxK + 1)
+          } else {
+            seqK :+ (maxK + 1)
+          }
+        }
 
         for (k <- List(newSeqK.head, newSeqK.last)) yield {
           val modelKMeans = if (k > 1 && method != null && (method == METHOD_KMEANS || method == METHOD_ALL)) {
@@ -95,34 +103,32 @@ object ClusteringIndexes {
           TuplaModelos(k, modelKMeans, modelBisectingKMeans, modelGMM)
         }
       } else null
-      
-      
 
-      if (indexes != null && indexes.contains(INDEX_BALL)) {
+      if (indexes != null && (indexes.contains(INDEX_BALL) || indexes.contains(INDEX_ALL))) {
         resultadoFinal ++= IndexBall.calculate(tupleModels, vectorData)
       }
 
-      if (indexes != null && indexes.contains(INDEX_CH)) {
+      if (indexes != null && (indexes.contains(INDEX_CH) || indexes.contains(INDEX_ALL))) {
         resultadoFinal ++= IndexCH.calculate(tupleModels, vectorData)
       }
 
-      if (indexes != null && indexes.contains(INDEX_DB)) {
+      if (indexes != null && (indexes.contains(INDEX_DB) || indexes.contains(INDEX_ALL))) {
         resultadoFinal ++= IndexDB.calculate(tupleModels, vectorData)
       }
 
-      if (indexes != null && indexes.contains(INDEX_HARTIGAN)) {
+      if (indexes != null && (indexes.contains(INDEX_HARTIGAN) || indexes.contains(INDEX_ALL))) {
         resultadoFinal ++= IndexHartigan.calculate(tupleModels, vectorData)
       }
 
-      if (indexes != null && indexes.contains(INDEX_RATKOWSKY)) {
+      if (indexes != null && (indexes.contains(INDEX_RATKOWSKY) || indexes.contains(INDEX_ALL))) {
         resultadoFinal ++= IndexRatkowsky.calculate(tupleModels, vectorData)
       }
-      
-      if (indexes != null && indexes.contains(INDEX_RAND)) {
+
+      if (indexes != null && (indexes.contains(INDEX_RAND) || indexes.contains(INDEX_ALL))) {
         resultadoFinal ++= IndexRand.calculate(tupleModels, evidencia)
       }
 
-      if (indexes != null && indexes.contains(INDEX_KL)) {
+      if (indexes != null && (indexes.contains(INDEX_KL) || indexes.contains(INDEX_ALL))) {
         resultadoFinal ++= IndexKL.calculate(tupleModels ::: newTupleModels, vectorData)
       }
     }

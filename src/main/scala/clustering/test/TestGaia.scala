@@ -12,7 +12,8 @@ import clustering.metrics.Utils.removeOutliers
 import org.apache.spark.ml.clustering.KMeans
 import clustering.metrics.indexes.IndexRand
 import org.apache.spark.ml.clustering.GaussianMixture
-import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.SQLContext
 
 object TestGaia {
 
@@ -59,5 +60,65 @@ object TestGaia {
     println(s"TIEMPO EMPLEADO EXPERIMENTO: $tEmpleado1")
 
     Spark.spark.stop()
+  }
+  
+  /**
+   * CALCULO DE COORDENADAS
+   */
+  def getX = udf { (parallax: Double, ascensionRecta: Double, declinacion: Double) =>
+    val distance = 1 / parallax
+    distance * scala.math.cos(ascensionRecta) * scala.math.cos(declinacion)
+  }
+
+  def getY = udf { (parallax: Double, ascensionRecta: Double, declinacion: Double) =>
+    val distance = 1 / parallax
+    distance * scala.math.sin(ascensionRecta) * scala.math.cos(declinacion)
+  }
+
+  def getZ = udf { (parallax: Double, ascensionRecta: Double, declinacion: Double) =>
+    val distance = 1 / parallax
+    distance * scala.math.sin(declinacion)
+  }
+
+  /**
+   * CALCULO DE VELOCIDAD TRANSVERSAL
+   */
+  def getVelocidadTransversal = udf { (parallax: Double, movPropioMilis: Double) =>
+    val distance = 1 / parallax
+    val movPropioSecs = movPropioMilis / 1000
+    movPropioSecs * distance * 4.74
+  }
+
+  /**
+   * GENERACION DEL DATAFRAME DE TGAS PARA EXPERIMENTO 1
+   */
+  def generateTGASExpDF1(sqlContext: SQLContext) = {
+    import Spark.spark.implicits._
+    val rutaDatosOriginales = "TGAS-DR1-parquet"
+    val rutaFinal = "TGAS-Exp1"
+    val columns = Seq("hip", "tycho2_id", "solution_id", "source_id", "ra", "dec", "pmra", "pmdec", "parallax")
+    val columnsDouble = Seq("ra", "dec", "pmra", "pmdec", "parallax")
+    var tgasDF = sqlContext.read.parquet(rutaDatosOriginales).select(columns.map(col): _*)
+    columnsDouble.foreach(x => tgasDF = tgasDF.withColumn(x, 'x.cast("Double")))
+    tgasDF.write.parquet(rutaFinal)
+  }
+
+  /**
+   * GENERACION DEL DATAFRAME DE TGAS PARA EXPERIMENTO 2
+   */
+  def generateTGASExpDF2(sqlContext: SQLContext) = {
+
+    import Spark.spark.implicits._
+
+    val rutaDatosOriginales = "TGAS-DR1-parquet"
+    val rutaFinal = "TGAS-Exp2"
+    val columns = Seq("hip", "tycho2_id", "solution_id", "source_id", "ra", "dec", "pmra", "pmdec", "parallax")
+    val columnsDouble = Seq("ra", "dec", "pmra", "pmdec", "parallax")
+    var tgasDF = sqlContext.read.parquet(rutaDatosOriginales).select(columns.map(col): _*)
+    columnsDouble.foreach(x => tgasDF = tgasDF.withColumn(x, 'x.cast("Double")))
+    tgasDF.withColumn("X", getX('parallax, 'ra, 'dec)).withColumn("Y", getY('parallax, 'ra, 'dec)).withColumn("Z", getZ('parallax, 'ra, 'dec))
+      .withColumn("VTA", getVelocidadTransversal('parallax, 'pmra)).withColumn("VTD", getVelocidadTransversal('parallax, 'pmdec))
+      .drop("ra", "dec", "parallax", "pmra", "pmdec")
+      .write.parquet(rutaFinal)
   }
 }

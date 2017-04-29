@@ -123,7 +123,7 @@ object IndexCH {
       val result = CHIndexesKMeans.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_CH, result_value._1, result_value._2, points, result_value._1)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_CH, result_value._2, points, result_value._1, result_value._1)
         points = points + 1
       }
     }
@@ -132,7 +132,7 @@ object IndexCH {
       val result = CHIndexesBisectingKMeans.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_CH, result_value._1, result_value._2, points, result_value._1)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_CH, result_value._2, points, result_value._1, result_value._1)
         points = points + 1
       }
     }
@@ -141,7 +141,7 @@ object IndexCH {
       val result = CHIndexesGMM.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_CH, result_value._1, result_value._2, points, result_value._3)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_CH, result_value._2, points, result_value._3, result_value._1)
         points = points + 1
       }
     }

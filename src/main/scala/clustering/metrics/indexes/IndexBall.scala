@@ -86,7 +86,7 @@ object IndexBall {
       val result = listaSlopes.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_BALL, result_value._1, result_value._2, points, result_value._1)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_BALL, result_value._2, points, result_value._1, result_value._1)
         points = points + 1
       }
     }
@@ -101,7 +101,7 @@ object IndexBall {
       val result = listaSlopes.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_BALL, result_value._1, result_value._2, points, result_value._1)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_BALL, result_value._2, points, result_value._1, result_value._1)
         points = points + 1
       }
     }
@@ -116,7 +116,7 @@ object IndexBall {
       val result = listaSlopes.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_BALL, result_value._1, result_value._2, points, result_value._3)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_BALL, result_value._2, points, result_value._3, result_value._1)
         points = points + 1
       }
     }

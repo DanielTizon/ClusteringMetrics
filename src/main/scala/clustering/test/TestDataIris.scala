@@ -23,8 +23,8 @@ object TestDataIris {
 
     val numRepeticiones = 1
     val maxIterations = 20
-    val method = ClusteringIndexes.METHOD_GMM
-    val indexes = Seq(ClusteringIndexes.INDEX_RAND)
+    val method = ClusteringIndexes.METHOD_KMEANS
+    val indexes = Seq(ClusteringIndexes.INDEX_ALL)
 
     val seqK = 2 to 15 by 1
 
@@ -39,6 +39,9 @@ object TestDataIris {
     val tIni = new Date().getTime
     val result = ClusteringIndexes.estimateNumberClusters(vectorData, seqK.toList, indexes = indexes, method = method, repeticiones = numRepeticiones, evidencia = evidencia)
     println(s"${result.sortBy(x => x.points).reverse.mkString("\n")}")
+    
+    val resultFinal = result.groupBy(_.kInicial).mapValues(x => x.map(_.points).sum).toList.sortBy(_._2).last
+    println(s"\nEl mejor k es ${resultFinal._1} con ${resultFinal._2} puntos")
 
     val tFin = new Date().getTime
     val tEmpleado = (tFin - tIni) / 1000.0

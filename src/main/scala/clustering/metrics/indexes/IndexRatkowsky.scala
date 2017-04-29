@@ -140,7 +140,7 @@ object IndexRatkowsky {
       val result = ratkowskyIndexesKMeans.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_RATKOWSKY, result_value._1, result_value._2, points, result_value._1)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_KMEANS, ClusteringIndexes.INDEX_RATKOWSKY, result_value._2, points, result_value._1, result_value._1)
         points = points + 1
       }
     }
@@ -149,7 +149,7 @@ object IndexRatkowsky {
       val result = ratkowskyIndexesBisectingKMeans.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_RATKOWSKY, result_value._1, result_value._2, points, result_value._1)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_BISECTING_KMEANS, ClusteringIndexes.INDEX_RATKOWSKY, result_value._2, points, result_value._1, result_value._1)
         points = points + 1
       }
     }
@@ -158,7 +158,7 @@ object IndexRatkowsky {
       val result = ratkowskyIndexesGMM.sortBy(x => x._2)
       var points = 0
       for (result_value <- result) {
-        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_RATKOWSKY, result_value._1, result_value._2, points, result_value._3)
+        listResultFinal += ResultIndex(ClusteringIndexes.METHOD_GMM, ClusteringIndexes.INDEX_RATKOWSKY, result_value._2, points, result_value._3, result_value._1)
         points = points + 1
       }
     }
